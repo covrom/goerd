@@ -72,7 +72,7 @@ func (d *Dict) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d *Dict) MarchalYAML() ([]byte, error) {
+func (d *Dict) MarshalYAML() ([]byte, error) {
 	return yaml.Marshal(d.Dump())
 }
 

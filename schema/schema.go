@@ -14,21 +14,6 @@ const (
 	TypeFK = "FOREIGN KEY"
 )
 
-type Label struct {
-	Name    string
-	Virtual bool
-}
-
-type Labels []*Label
-
-func (labels Labels) Merge(name string) Labels {
-	for _, l := range labels {
-		if l.Name == name {
-			return labels
-		}
-	}
-	return append(labels, &Label{Name: name, Virtual: true})
-}
 
 // Index is the struct for database index
 type Index struct {
@@ -79,7 +64,6 @@ type Table struct {
 	Constraints []*Constraint `json:"constraints"`
 	Triggers    []*Trigger    `json:"triggers"`
 	Def         string        `json:"def"`
-	Labels      Labels        `json:"labels,omitempty"`
 }
 
 // Relation is the struct for table relation
@@ -89,7 +73,6 @@ type Relation struct {
 	ParentTable   *Table    `json:"parent_table" yaml:"parentTable"`
 	ParentColumns []*Column `json:"parent_columns" yaml:"parentColumns"`
 	Def           string    `json:"def"`
-	Virtual       bool      `json:"virtual"`
 }
 
 type DriverMeta struct {
@@ -112,7 +95,6 @@ type Schema struct {
 	Tables    []*Table    `json:"tables"`
 	Relations []*Relation `json:"relations"`
 	Driver    *Driver     `json:"driver"`
-	Labels    Labels      `json:"labels,omitempty"`
 }
 
 func (s *Schema) NormalizeTableName(name string) string {
