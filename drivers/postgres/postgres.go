@@ -275,19 +275,30 @@ ORDER BY attr.attnum;
 			var (
 				indexName        string
 				indexDef         string
+				indisprimary     bool
+				indisunique      bool
+				indisclustered   bool
+				amname           string
 				indexColumnNames []sql.NullString
 				indexComment     sql.NullString
 			)
-			err = indexRows.Scan(&indexName, &indexDef, pq.Array(&indexColumnNames), &indexComment)
+			err = indexRows.Scan(&indexName, &indisprimary,
+				&indisunique, &indisclustered,
+				&amname, &indexDef,
+				pq.Array(&indexColumnNames), &indexComment)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			index := &schema.Index{
-				Name:    indexName,
-				Def:     indexDef,
-				Table:   &table.Name,
-				Columns: arrayRemoveNull(indexColumnNames),
-				Comment: indexComment.String,
+				Name:        indexName,
+				IsClustered: indisclustered,
+				IsPrimary:   indisprimary,
+				IsUnique:    indisunique,
+				MethodName:  amname,
+				Def:         indexDef,
+				Table:       &table.Name,
+				Columns:     arrayRemoveNull(indexColumnNames),
+				Comment:     indexComment.String,
 			}
 
 			indexes = append(indexes, index)
@@ -405,6 +416,10 @@ func (p *Postgres) queryForIndexes() string {
 	return `
 SELECT
   cls.relname AS indexname,
+  idx.indisprimary,
+  idx.indisunique,
+  idx.indisclustered,
+  am.amname,
   pg_get_indexdef(idx.indexrelid) AS indexdef,
   ARRAY_AGG(attr.attname),
   descr.description AS comment
@@ -412,8 +427,9 @@ FROM pg_index AS idx
 INNER JOIN pg_class AS cls ON idx.indexrelid = cls.oid
 INNER JOIN pg_attribute AS attr ON idx.indexrelid = attr.attrelid
 LEFT JOIN pg_description AS descr ON idx.indexrelid = descr.objoid
+LEFT JOIN pg_am am ON am.oid=cls.relam
 WHERE idx.indrelid = $1::oid
-GROUP BY cls.relname, idx.indexrelid, descr.description
+GROUP BY cls.relname, idx.indexrelid, descr.description, idx.indisprimary, idx.indisunique, idx.indisclustered, am.amname
 ORDER BY idx.indexrelid`
 }
 

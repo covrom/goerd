@@ -39,8 +39,12 @@ type YamlConstraint struct {
 }
 
 type YamlIndex struct {
-	Def     string   `yaml:"def,omitempty"`
-	Columns []string `yaml:"columns,flow"`
+	Def         string   `yaml:"def,omitempty"`
+	IsPrimary   bool     `yaml:"isPrimary,omitempty"`
+	IsUnique    bool     `yaml:"isUnique,omitempty"`
+	IsClustered bool     `yaml:"isClustered,omitempty"`
+	MethodName  string   `yaml:"methodName,omitempty"`
+	Columns     []string `yaml:"columns,flow"`
 }
 
 type YamlColumn struct {
@@ -78,8 +82,12 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 		}
 		for _, idx := range t.Indexes {
 			yt.Indexes[idx.Name] = &YamlIndex{
-				Def:     idx.Def,
-				Columns: idx.Columns,
+				IsClustered: idx.IsClustered,
+				IsPrimary:   idx.IsPrimary,
+				IsUnique:    idx.IsUnique,
+				MethodName:  idx.MethodName,
+				Def:         idx.Def,
+				Columns:     idx.Columns,
 			}
 		}
 		for _, cs := range t.Constraints {

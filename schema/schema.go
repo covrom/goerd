@@ -14,14 +14,17 @@ const (
 	TypeFK = "FOREIGN KEY"
 )
 
-
 // Index is the struct for database index
 type Index struct {
-	Name    string   `json:"name"`
-	Def     string   `json:"def"`
-	Table   *string  `json:"table"`
-	Columns []string `json:"columns"`
-	Comment string   `json:"comment"`
+	Name        string `json:"name"`
+	IsPrimary   bool
+	IsUnique    bool
+	IsClustered bool
+	MethodName  string
+	Def         string   `json:"def"`
+	Table       *string  `json:"table"`
+	Columns     []string `json:"columns"`
+	Comment     string   `json:"comment"`
 }
 
 // Constraint is the struct for database constraint

@@ -55,7 +55,7 @@ rectangle "{{ $t.Name }}" {
 		{{ $cc | html }}
 		{{- end }}
 	}
-	"{{ $c.Name }}" -- "{{ $t.Name }}" : "{{ $c.Def }}"
+	"{{ $c.Name }}" -- "{{ $t.Name }}" : "{{if $c.IsPrimary}}PRIMARY KEY{{else}}{{if $c.IsUnique}}UNIQUE{{end}} {{$c.MethodName}}{{end}} {{if $c.IsClustered}}CLUSTERED{{end}}"
 	{{- end }}
 }
 {{- end }}
