@@ -24,7 +24,7 @@ func NewPlantUML(d *dict.Dict, distance int) *PlantUML {
 	}
 }
 
-// TODO: add indexes and triggers
+// TODO: add indexes, constraints and triggers
 
 func (p *PlantUML) schemaTemplate() string {
 	return `@startuml
