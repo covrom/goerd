@@ -15,15 +15,13 @@ var reFK = regexp.MustCompile(`FOREIGN KEY \((.+)\) REFERENCES ([^\s]+)\s?\((.+)
 
 // Postgres struct
 type Postgres struct {
-	db     *sql.DB
-	rsMode bool
+	db *sql.DB
 }
 
 // New return new Postgres
 func New(db *sql.DB) *Postgres {
 	return &Postgres{
-		db:     db,
-		rsMode: false,
+		db: db,
 	}
 }
 
@@ -181,8 +179,7 @@ ORDER BY oid`)
 		table.Constraints = constraints
 
 		// triggers
-		if !p.rsMode {
-			triggerRows, err := p.db.Query(`
+		triggerRows, err := p.db.Query(`
 SELECT tgname, pg_get_triggerdef(trig.oid), descr.description AS comment
 FROM pg_trigger AS trig
 LEFT JOIN pg_description AS descr ON trig.oid = descr.objoid
@@ -190,31 +187,30 @@ WHERE tgisinternal = false
 AND tgrelid = $1::oid
 ORDER BY tgrelid
 `, tableOid)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer triggerRows.Close()
+
+		triggers := []*schema.Trigger{}
+		for triggerRows.Next() {
+			var (
+				triggerName    string
+				triggerDef     string
+				triggerComment sql.NullString
+			)
+			err = triggerRows.Scan(&triggerName, &triggerDef, &triggerComment)
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			defer triggerRows.Close()
-
-			triggers := []*schema.Trigger{}
-			for triggerRows.Next() {
-				var (
-					triggerName    string
-					triggerDef     string
-					triggerComment sql.NullString
-				)
-				err = triggerRows.Scan(&triggerName, &triggerDef, &triggerComment)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				trigger := &schema.Trigger{
-					Name:    triggerName,
-					Def:     triggerDef,
-					Comment: triggerComment.String,
-				}
-				triggers = append(triggers, trigger)
+			trigger := &schema.Trigger{
+				Name:    triggerName,
+				Def:     triggerDef,
+				Comment: triggerComment.String,
 			}
-			table.Triggers = triggers
+			triggers = append(triggers, trigger)
 		}
+		table.Triggers = triggers
 
 		// columns
 		columnRows, err := p.db.Query(`
@@ -359,9 +355,6 @@ func (p *Postgres) Info() (*schema.Driver, error) {
 	}
 
 	name := "postgres"
-	if p.rsMode {
-		name = "redshift"
-	}
 
 	d := &schema.Driver{
 		Name:            name,
@@ -371,20 +364,7 @@ func (p *Postgres) Info() (*schema.Driver, error) {
 	return d, nil
 }
 
-// EnableRsMode enable rsMode
-func (p *Postgres) EnableRsMode() {
-	p.rsMode = true
-}
-
 func (p *Postgres) queryForConstraints() string {
-	if p.rsMode {
-		return `
-SELECT
-  conname, pg_get_constraintdef(oid), contype, NULL, NULL, NULL, NULL
-FROM pg_constraint
-WHERE conrelid = $1::oid
-ORDER BY conname`
-	}
 	return `
 SELECT
   cons.conname AS name,
@@ -422,18 +402,6 @@ func arrayRemoveNull(in []sql.NullString) []string {
 }
 
 func (p *Postgres) queryForIndexes() string {
-	if p.rsMode {
-		return `
-SELECT
-  cls.relname AS indexname,
-  pg_get_indexdef(idx.indexrelid) AS indexdef,
-  NULL,
-  NULL
-FROM pg_index AS idx
-INNER JOIN pg_class AS cls ON idx.indexrelid = cls.oid
-WHERE idx.indrelid = $1::oid
-ORDER BY idx.indexrelid`
-	}
 	return `
 SELECT
   cls.relname AS indexname,
