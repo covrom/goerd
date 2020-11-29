@@ -24,14 +24,10 @@ func NewPlantUML(d *dict.Dict, distance int) *PlantUML {
 	}
 }
 
-// TODO: add indexes, constraints and triggers
+// TODO: add constraints and triggers
 
 func (p *PlantUML) schemaTemplate() string {
 	return `@startuml
-{{ $sc := .showComment -}}
-!define table(name, desc) entity name as "desc" << (T,#5DBCD2) >>
-!define view(name, desc) entity name as "desc" << (V,#C6EDDB) >>
-!define column(name, type, desc) name <font color="#666666">[type]</font><font color="#333333">desc</font>
 hide methods
 hide stereotypes
 
@@ -43,14 +39,24 @@ skinparam class {
 
 ' tables
 {{- range $i, $t := .Schema.Tables }}
-{{- if ne $t.Type "VIEW" }}
-table("{{ $t.Name }}", "{{ $t.Name }}{{ if $sc }}{{ if ne $t.Comment "" }}\n{{ $t.Comment | html | escape_nl }}{{ end }}{{ end }}") {
-{{- else }}
-view("{{ $t.Name }}", "{{ $t.Name }}{{ if $sc }}{{ if ne $t.Comment "" }}\n{{ $t.Comment | html | escape_nl }}{{ end }}{{ end }}") {
-{{- end }}
-{{- range $ii, $c := $t.Columns }}
-	column("{{ $c.Name | html }}", "{{ $c.Type | html }}", "{{ if $sc }}{{ if ne $c.Comment "" }} {{ $c.Comment | html | nl2space }}{{ end }}{{ end }}")
-{{- end }}
+rectangle "{{ $t.Name }}" {
+	{{- if ne $t.Type "VIEW" }}
+	entity {{ $t.Name }} as "{{ $t.Name }}" << (T,#5DBCD2) >> {
+	{{- else }}
+	entity {{ $t.Name }} as "{{ $t.Name }}" << (V,#C6EDDB) >> {
+	{{- end }}
+	{{- range $ii, $c := $t.Columns }}
+		{{ $c.Name | html }} <font color="#666666">[{{ $c.Type | html }}]</font>
+	{{- end }}
+	}
+	{{- range $ii, $c := $t.Indexes }}
+	entity {{ $c.Name }} as "{{ $c.Name }}" << (I,#D25D8A) >> {
+		{{- range $iii, $cc := $c.Columns }}
+		{{ $cc | html }}
+		{{- end }}
+	}
+	"{{ $c.Name }}" -- "{{ $t.Name }}" : "{{ $c.Def }}"
+	{{- end }}
 }
 {{- end }}
 
