@@ -24,6 +24,8 @@ func NewPlantUML(d *dict.Dict, distance int) *PlantUML {
 	}
 }
 
+// TODO: add indexes and triggers
+
 func (p *PlantUML) schemaTemplate() string {
 	return `@startuml
 {{ $sc := .showComment -}}
@@ -61,52 +63,6 @@ view("{{ $t.Name }}", "{{ $t.Name }}{{ if $sc }}{{ if ne $t.Comment "" }}\n{{ $t
 `
 }
 
-func (p *PlantUML) tableTemplate() string {
-	return `@startuml
-{{ $sc := .showComment -}}
-!define table(name, desc) entity name as "desc" << (T,#5DBCD2) >>
-!define view(name, desc) entity name as "desc" << (V,#C6EDDB) >>
-!define column(name, type, desc) name <font color="#666666">[type]</font><font color="#333333">desc</font>
-hide methods
-hide stereotypes
-
-skinparam class {
-	BackgroundColor White
-	BorderColor #6E6E6E
-	ArrowColor #6E6E6E
-}
-
-' tables
-{{- if ne .Table.Type "VIEW" }}
-table("{{ .Table.Name }}", "{{ .Table.Name }}{{ if $sc }}{{ if ne .Table.Comment "" }}\n{{ .Table.Comment | html | escape_nl }}{{ end }}{{ end }}") {
-{{- else }}
-view("{{ .Table.Name }}", "{{ .Table.Name }}{{ if $sc }}{{ if ne .Table.Comment "" }}\n{{ .Table.Comment | html | escape_nl }}{{ end }}{{ end }}") {
-{{- end }}
-{{- range $i, $c := .Table.Columns }}
-	column("{{ $c.Name | html }}", "{{ $c.Type | html }}", "{{ if $sc }}{{ if ne $c.Comment "" }} {{ $c.Comment | html | nl2space }}{{ end }}{{ end }}")
-{{- end }}
-}
-{{- range $i, $t := .Tables }}
-{{- if ne $t.Type "VIEW" }}
-table("{{ $t.Name }}", "{{ $t.Name }}{{ if $sc }}{{ if ne $t.Comment "" }}\n{{ $t.Comment | html | escape_nl }}{{ end }}{{ end }}") {
-{{- else }}
-view("{{ $t.Name }}", "{{ $t.Name }}{{ if $sc }}{{ if ne $t.Comment "" }}\n{{ $t.Comment | html | escape_nl }}{{ end }}{{ end }}") {
-{{- end }}
-{{- range $ii, $c := $t.Columns }}
-	column("{{ $c.Name | html }}", "{{ $c.Type | html }}", "{{ if $sc }}{{ if ne $c.Comment "" }} {{ $c.Comment | html | nl2space }}{{ end }}{{ end }}")
-{{- end }}
-}
-{{- end }}
-
-' relations
-{{- range $j, $r := .Relations }}
-"{{ $r.Table.Name }}" }-- "{{ $r.ParentTable.Name }}" : "{{ $r.Def | html }}"
-{{- end }}
-
-@enduml
-`
-}
-
 // OutputSchema output dot format for full relation.
 func (p *PlantUML) OutputSchema(wr io.Writer, s *Schema) error {
 	for _, t := range s.Tables {
@@ -121,34 +77,6 @@ func (p *PlantUML) OutputSchema(wr io.Writer, s *Schema) error {
 	tmpl := template.Must(template.New(s.Name).Funcs(Funcs(p.Dict)).Parse(ts))
 	err := tmpl.Execute(wr, map[string]interface{}{
 		"Schema":      s,
-		"showComment": false,
-	})
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
-}
-
-// OutputTable output dot format for table.
-func (p *PlantUML) OutputTable(wr io.Writer, t *Table) error {
-	tables, relations, err := t.CollectTablesAndRelations(p.Distance, true)
-
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	for _, t := range tables {
-		if err := addPrefix(t); err != nil {
-			return errors.WithStack(err)
-		}
-	}
-	ts := p.tableTemplate()
-
-	tmpl := template.Must(template.New(t.Name).Funcs(Funcs(p.Dict)).Parse(ts))
-	err = tmpl.Execute(wr, map[string]interface{}{
-		"Table":       tables[0],
-		"Tables":      tables[1:],
-		"Relations":   relations,
 		"showComment": false,
 	})
 	if err != nil {
