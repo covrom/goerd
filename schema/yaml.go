@@ -7,10 +7,9 @@ import (
 )
 
 type YamlSchema struct {
-	Name      string                `yaml:"name"`
-	Schema    string                `yaml:"schema"`
-	Tables    map[string]*YamlTable `yaml:"tables"`
-	Relations []*YamlRelation       `yaml:"relations"`
+	Name   string                `yaml:"name"`
+	Schema string                `yaml:"schema"`
+	Tables map[string]*YamlTable `yaml:"tables"`
 }
 
 type YamlTable struct {
@@ -18,14 +17,13 @@ type YamlTable struct {
 	Columns     map[string]*YamlColumn     `yaml:"columns"`
 	Indexes     map[string]*YamlIndex      `yaml:"indexes"`
 	Constraints map[string]*YamlConstraint `yaml:"constraints"`
+	Relations   map[string]*YamlRelation   `yaml:"relations"` // key = parent table
 	Triggers    map[string]string          `yaml:"triggers"`
 	Def         string                     `yaml:"def,omitempty"`
 }
 
 type YamlRelation struct {
-	Table         string   `yaml:"table,omitempty"`
 	Columns       []string `yaml:"columns,flow"`
-	ParentTable   string   `yaml:"parentTable,omitempty"`
 	ParentColumns []string `yaml:"parentColumns,flow"`
 	Def           string   `yaml:"def,omitempty"`
 }
@@ -56,10 +54,9 @@ type YamlColumn struct {
 
 func (s *Schema) MarshalYAML() ([]byte, error) {
 	ys := &YamlSchema{
-		Name:      s.Name,
-		Schema:    s.Driver.Meta.CurrentSchema,
-		Tables:    make(map[string]*YamlTable, len(s.Tables)),
-		Relations: make([]*YamlRelation, len(s.Relations)),
+		Name:   s.Name,
+		Schema: s.Driver.Meta.CurrentSchema,
+		Tables: make(map[string]*YamlTable, len(s.Tables)),
 	}
 	for _, t := range s.Tables {
 		yt := &YamlTable{
@@ -68,6 +65,7 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 			Constraints: make(map[string]*YamlConstraint, len(t.Constraints)),
 			Indexes:     make(map[string]*YamlIndex, len(t.Indexes)),
 			Triggers:    make(map[string]string, len(t.Triggers)),
+			Relations:   make(map[string]*YamlRelation, len(t.Constraints)),
 			Type:        t.Type,
 		}
 		var defval *string
@@ -105,28 +103,24 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 		for _, tr := range t.Triggers {
 			yt.Triggers[tr.Name] = tr.Def
 		}
+		for _, r := range s.Relations {
+			if r.Table.Name != t.Name {
+				continue
+			}
+			yr := &YamlRelation{
+				Def:           r.Def,
+				Columns:       make([]string, len(r.Columns)),
+				ParentColumns: make([]string, len(r.ParentColumns)),
+			}
+			for j, v := range r.Columns {
+				yr.Columns[j] = v.Name
+			}
+			for j, v := range r.ParentColumns {
+				yr.ParentColumns[j] = v.Name
+			}
+			yt.Relations[r.ParentTable.Name] = yr
+		}
 		ys.Tables[t.Name] = yt
-	}
-
-	for i, r := range s.Relations {
-		yr := &YamlRelation{
-			Def:           r.Def,
-			Columns:       make([]string, len(r.Columns)),
-			ParentColumns: make([]string, len(r.ParentColumns)),
-		}
-		if r.Table != nil {
-			yr.Table = r.Table.Name
-		}
-		if r.ParentTable != nil {
-			yr.ParentTable = r.ParentTable.Name
-		}
-		for j, v := range r.Columns {
-			yr.Columns[j] = v.Name
-		}
-		for j, v := range r.ParentColumns {
-			yr.ParentColumns[j] = v.Name
-		}
-		ys.Relations[i] = yr
 	}
 
 	return yaml.Marshal(ys)

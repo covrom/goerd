@@ -110,7 +110,7 @@ ORDER BY oid`)
 			name = fmt.Sprintf("%s.%s", tableSchema, tableName)
 		}
 
-		fullTableNames = append(fullTableNames, name)
+		fullTableNames = append(fullTableNames, fmt.Sprintf("%s.%s", tableSchema, tableName))
 
 		table := &schema.Table{
 			Name:    name,
