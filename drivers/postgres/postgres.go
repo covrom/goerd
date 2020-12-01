@@ -71,7 +71,7 @@ SELECT
     cls.oid AS oid,
     cls.relname AS table_name,
     CASE
-        WHEN cls.relkind IN ('r', 'p') THEN 'BASE TABLE'
+        WHEN cls.relkind IN ('r', 'p') THEN 'TABLE'
         WHEN cls.relkind = 'v' THEN 'VIEW'
         WHEN cls.relkind = 'm' THEN 'MATERIALIZED VIEW'
         WHEN cls.relkind = 'f' THEN 'FOREIGN TABLE'
@@ -105,7 +105,10 @@ ORDER BY oid`)
 			return errors.WithStack(err)
 		}
 
-		name := fmt.Sprintf("%s.%s", tableSchema, tableName)
+		name := tableName
+		if tableSchema != currentSchema {
+			name = fmt.Sprintf("%s.%s", tableSchema, tableName)
+		}
 
 		fullTableNames = append(fullTableNames, name)
 
@@ -128,7 +131,8 @@ ORDER BY oid`)
 				if err != nil {
 					return errors.WithStack(err)
 				}
-				table.Def = fmt.Sprintf("CREATE %s %s AS (\n%s\n)", tableType, tableName, strings.TrimRight(tableDef.String, ";"))
+				//  fmt.Sprintf("CREATE %s %s AS (\n%s\n)", tableType, tableName, strings.TrimRight(tableDef.String, ";"))
+				table.Def = strings.TrimRight(tableDef.String, ";")
 			}
 		}
 

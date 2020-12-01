@@ -8,6 +8,7 @@ import (
 
 type YamlSchema struct {
 	Name      string                `yaml:"name"`
+	Schema    string                `yaml:"schema"`
 	Tables    map[string]*YamlTable `yaml:"tables"`
 	Relations []*YamlRelation       `yaml:"relations"`
 }
@@ -56,6 +57,7 @@ type YamlColumn struct {
 func (s *Schema) MarshalYAML() ([]byte, error) {
 	ys := &YamlSchema{
 		Name:      s.Name,
+		Schema:    s.Driver.Meta.CurrentSchema,
 		Tables:    make(map[string]*YamlTable, len(s.Tables)),
 		Relations: make([]*YamlRelation, len(s.Relations)),
 	}
@@ -130,68 +132,24 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 	return yaml.Marshal(ys)
 }
 
-// // UnmarshalYAML unmarshal YAML to schema.Column
-// func (c *Column) UnmarshalYAML(data []byte) error {
-// 	s := struct {
-// 		Name     string  `yaml:"name"`
-// 		Type     string  `yaml:"type"`
-// 		Nullable bool    `yaml:"nullable"`
-// 		Default  *string `yaml:"default"`
-// 		Comment  string  `yaml:"comment"`
-// 	}{}
-// 	err := yaml.Unmarshal(data, &s)
-// 	if err != nil {
-// 		return err
-// 	}
+func (s *Schema) UnmarshalYAML(data []byte) error {
+	ys := &YamlSchema{}
+	if err := yaml.Unmarshal(data, &ys); err != nil {
+		return err
+	}
+	*s = Schema{}
+	s.Tables = make([]*Table, 0, len(ys.Tables))
+	for name, yt := range ys.Tables {
+		t := &Table{
+			Name: name,
+			Type: yt.Type,
+			Def:  yt.Def,
+		}
 
-// 	c.Name = s.Name
-// 	c.Type = s.Type
-// 	c.Nullable = s.Nullable
-// 	if s.Default != nil {
-// 		c.Default.Valid = true
-// 		c.Default.String = *s.Default
-// 	} else {
-// 		c.Default.Valid = false
-// 		c.Default.String = ""
-// 	}
-// 	c.Comment = s.Comment
-// 	return nil
-// }
-
-// // UnmarshalYAML unmarshal YAML to schema.Column
-// func (r *Relation) UnmarshalYAML(data []byte) error {
-// 	s := struct {
-// 		Table         string   `yaml:"table"`
-// 		Columns       []string `yaml:"columns"`
-// 		ParentTable   string   `yaml:"parentTable"`
-// 		ParentColumns []string `yaml:"parentColumns"`
-// 		Def           string   `yaml:"def"`
-// 	}{}
-// 	err := yaml.Unmarshal(data, &s)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	r.Table = &Table{
-// 		Name: s.Table,
-// 	}
-// 	r.Columns = []*Column{}
-// 	for _, c := range s.Columns {
-// 		r.Columns = append(r.Columns, &Column{
-// 			Name: c,
-// 		})
-// 	}
-// 	r.ParentTable = &Table{
-// 		Name: s.ParentTable,
-// 	}
-// 	r.ParentColumns = []*Column{}
-// 	for _, c := range s.ParentColumns {
-// 		r.ParentColumns = append(r.ParentColumns, &Column{
-// 			Name: c,
-// 		})
-// 	}
-// 	r.Def = s.Def
-// 	return nil
-// }
+		s.Tables = append(s.Tables, t)
+	}
+	return nil
+}
 
 // YAML struct
 type YAML struct{}
