@@ -171,6 +171,8 @@ ORDER BY oid`)
 				Comment:          constraintComment.String,
 			}
 
+			// TODO: on delete - scan parameters
+
 			if constraintType == "f" {
 				relation := &schema.Relation{
 					Table: table,
