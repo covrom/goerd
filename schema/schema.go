@@ -24,6 +24,8 @@ type Index struct {
 	Def         string   `json:"def"`
 	Table       *string  `json:"table"`
 	Columns     []string `json:"columns"`
+	With        string   `json:"with,omitempty"`
+	Where       string   `json:"where,omitempty"`
 	Comment     string   `json:"comment"`
 }
 

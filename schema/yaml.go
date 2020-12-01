@@ -44,6 +44,8 @@ type YamlIndex struct {
 	IsClustered bool     `yaml:"isClustered,omitempty"`
 	MethodName  string   `yaml:"methodName,omitempty"`
 	Columns     []string `yaml:"columns,flow"`
+	With        string   `yaml:"with,omitempty"`
+	Where       string   `yaml:"where,omitempty"`
 }
 
 type YamlColumn struct {
@@ -86,8 +88,11 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 				IsPrimary:   idx.IsPrimary,
 				IsUnique:    idx.IsUnique,
 				MethodName:  idx.MethodName,
-				Def:         idx.Def,
-				Columns:     idx.Columns,
+				// def disabled
+				// Def:         idx.Def,
+				Columns: idx.Columns,
+				With:    idx.With,
+				Where:   idx.Where,
 			}
 		}
 		for _, cs := range t.Constraints {

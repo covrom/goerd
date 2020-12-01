@@ -305,6 +305,7 @@ ORDER BY attr.attnum;
 				Table:       &table.Name,
 				Columns:     arrayRemoveNull(indexColumnNames),
 				Comment:     indexComment.String,
+				// TODO: Where and With
 			}
 
 			indexes = append(indexes, index)
