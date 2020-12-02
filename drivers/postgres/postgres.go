@@ -303,8 +303,9 @@ ORDER BY attr.attnum;
 				MethodName:  amname,
 				Def:         indexDef,
 				Table:       &table.Name,
-				Columns:     arrayRemoveNull(indexColumnNames),
-				Comment:     indexComment.String,
+				// TODO: columns with collate, asc/desc and other params
+				Columns: arrayRemoveNull(indexColumnNames),
+				Comment: indexComment.String,
 				// TODO: Where and With
 			}
 
