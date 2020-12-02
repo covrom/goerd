@@ -27,7 +27,10 @@ func TestParseCreateIndex(t *testing.T) {
 		Unique:       true,
 		Concurrently: false,
 		UsingType:    "btree",
-		Tail:         "(\t\tsdih COLLATE \"ru_RU\" int4 ASC NULLS LAST,\n asfg COLLATE \"ru_RU\" DESC,\n ertny,\n ((recruiter_info ->>\n 'email'::text))\n )\n\n WITH a= b, c = d,e=f\n TABLESPACE f\n WHERE as;roug (hblkas) bfdvvkjhb (3li54f9q3er opfbg78 9)erg",
+		ColDef:       "(\t\tsdih COLLATE \"ru_RU\" int4 ASC NULLS LAST,\n asfg COLLATE \"ru_RU\" DESC,\n ertny,\n ((recruiter_info ->>\n 'email'::text))\n )",
+		With:         "a= b, c = d,e=f",
+		Tablespace:   "f",
+		Where:        "as;roug (hblkas) bfdvvkjhb (3li54f9q3er opfbg78 9)erg",
 	}
 	if !reflect.DeepEqual(ss, eq) {
 		t.Errorf("%#v", ss)
