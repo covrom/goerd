@@ -38,14 +38,16 @@ type YamlConstraint struct {
 }
 
 type YamlIndex struct {
-	Def         string   `yaml:"def,omitempty"`
-	IsPrimary   bool     `yaml:"isPrimary,omitempty"`
-	IsUnique    bool     `yaml:"isUnique,omitempty"`
-	IsClustered bool     `yaml:"isClustered,omitempty"`
-	MethodName  string   `yaml:"methodName,omitempty"`
-	Columns     []string `yaml:"columns,flow"`
-	With        string   `yaml:"with,omitempty"`
-	Where       string   `yaml:"where,omitempty"`
+	IsPrimary    bool     `yaml:"isPrimary,omitempty"`
+	IsUnique     bool     `yaml:"isUnique,omitempty"`
+	IsClustered  bool     `yaml:"isClustered,omitempty"`
+	Concurrently bool     `yaml:"concurrently,omitempty"`
+	MethodName   string   `yaml:"methodName,omitempty"`
+	Columns      []string `yaml:"columns,flow"`
+	ColDef       string   `yaml:"coldef,omitempty"`
+	With         string   `yaml:"with,omitempty"`
+	Tablespace   string   `yaml:"tablespace,omitempty"`
+	Where        string   `yaml:"where,omitempty"`
 }
 
 type YamlColumn struct {
@@ -84,15 +86,16 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 		}
 		for _, idx := range t.Indexes {
 			yt.Indexes[idx.Name] = &YamlIndex{
-				IsClustered: idx.IsClustered,
-				IsPrimary:   idx.IsPrimary,
-				IsUnique:    idx.IsUnique,
-				MethodName:  idx.MethodName,
-				// def disabled
-				// Def:         idx.Def,
-				Columns: idx.Columns,
-				With:    idx.With,
-				Where:   idx.Where,
+				IsClustered:  idx.IsClustered,
+				IsPrimary:    idx.IsPrimary,
+				IsUnique:     idx.IsUnique,
+				MethodName:   idx.MethodName,
+				Columns:      idx.Columns,
+				With:         idx.With,
+				Where:        idx.Where,
+				Concurrently: idx.Concurrently,
+				ColDef:       idx.ColDef,
+				Tablespace:   idx.Tablespace,
 			}
 		}
 		for _, cs := range t.Constraints {

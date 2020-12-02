@@ -16,17 +16,20 @@ const (
 
 // Index is the struct for database index
 type Index struct {
-	Name        string `json:"name"`
-	IsPrimary   bool
-	IsUnique    bool
-	IsClustered bool
-	MethodName  string
-	Def         string   `json:"def"`
-	Table       *string  `json:"table"`
-	Columns     []string `json:"columns"`
-	With        string   `json:"with,omitempty"`
-	Where       string   `json:"where,omitempty"`
-	Comment     string   `json:"comment"`
+	Name         string `json:"name"`
+	IsPrimary    bool
+	IsUnique     bool
+	IsClustered  bool
+	MethodName   string
+	Def          string   `json:"def"`
+	Table        *string  `json:"table"`
+	Columns      []string `json:"columns"`
+	Concurrently bool     `json:"concurrently,omitempty"`
+	ColDef       string   `json:"coldef,omitempty"`
+	With         string   `json:"with,omitempty"`
+	Tablespace   string   `json:"tablespace,omitempty"`
+	Where        string   `json:"where,omitempty"`
+	Comment      string   `json:"comment"`
 }
 
 // Constraint is the struct for database constraint

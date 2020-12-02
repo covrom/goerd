@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/covrom/goerd/drivers/postgres/idxscan"
 	"github.com/covrom/goerd/schema"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -295,18 +296,26 @@ ORDER BY attr.attnum;
 			if err != nil {
 				return errors.WithStack(err)
 			}
+			idxprs := idxscan.ParseCreateIndex(indexDef)
 			index := &schema.Index{
-				Name:        indexName,
-				IsClustered: indisclustered,
-				IsPrimary:   indisprimary,
-				IsUnique:    indisunique,
-				MethodName:  amname,
-				Def:         indexDef,
-				Table:       &table.Name,
-				// TODO: columns with collate, asc/desc and other params
-				Columns: arrayRemoveNull(indexColumnNames),
-				Comment: indexComment.String,
+				Name:         indexName,
+				IsClustered:  indisclustered,
+				IsPrimary:    indisprimary,
+				IsUnique:     indisunique,
+				MethodName:   amname,
+				Def:          indexDef,
+				Table:        &table.Name,
+				Concurrently: idxprs.Concurrently,
+				ColDef:       idxprs.ColDef,
+				With:         idxprs.With,
+				Tablespace:   idxprs.Tablespace,
+				Where:        idxprs.Where,
+				Columns:      arrayRemoveNull(indexColumnNames),
+				Comment:      indexComment.String,
 				// TODO: Where and With
+			}
+			if strings.ReplaceAll(idxprs.ColDef, " ", "") == "("+strings.Join(index.Columns, ",")+")" {
+				index.ColDef = ""
 			}
 
 			indexes = append(indexes, index)
