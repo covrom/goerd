@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	dsn  = flag.String("dsn", "", "postgresql database DSN")
+	dsn  = flag.String("dsn", "", "Build a DSN e.g. postgres://username:password@url:port/dbName")
 	yml  = flag.String("oy", "schema.yaml", "output yaml filename")
 	pml  = flag.String("op", "schema.puml", "output plant uml filename")
 	dist = flag.Int("opdist", 2, "distance for plant uml")

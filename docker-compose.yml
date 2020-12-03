@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  goerd:
+    image: goerd:develop
+    build:
+      context: ./
+    command: goerd -dsn "postgres://postgres:goerd@db:5432/postgres?sslmode=disable"
+
+
+  db:
+    image: postgres:12.5-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: goerd
