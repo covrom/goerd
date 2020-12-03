@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  db:
+    image:  postgres:12.5-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: goerd
