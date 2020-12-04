@@ -11,3 +11,6 @@ Features (in progress):
 - Using https://github.com/jackc/pgx
 - Run as grpc-microservice
 - Use as library
+
+### testing and examples 
+```docker-compose up``` and see `./outpur/schema.yaml`
