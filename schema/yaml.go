@@ -87,6 +87,20 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 			}
 		}
 		for _, idx := range t.Indexes {
+			// search in constraints
+			if idx.MethodName == "btree" && idx.Where == "" && idx.With == "" && !idx.Concurrently && !idx.IsClustered {
+				csfnd := false
+				for _, cs := range t.Constraints {
+					if cs.Name == idx.Name {
+						csfnd = true
+						break
+					}
+				}
+				if csfnd {
+					continue
+				}
+			}
+
 			yt.Indexes[idx.Name] = &YamlIndex{
 				IsClustered:  idx.IsClustered,
 				IsPrimary:    idx.IsPrimary,
