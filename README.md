@@ -12,5 +12,9 @@ Features (in progress):
 - Run as grpc-microservice
 - Use as library
 
+Example of generated plantuml:
+
+![Plantuml view](plantuml-example.png)
+
 ### testing and examples 
-```docker-compose up``` and see `./outpur/schema.yaml`
+```docker-compose up``` and see `./output/schema.yaml`
