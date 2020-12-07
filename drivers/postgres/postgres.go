@@ -12,7 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var reFK = regexp.MustCompile(`FOREIGN KEY \((.+)\) REFERENCES ([^\s]+)\s?\((.+)\)`)
+var reFK = regexp.MustCompile(`(?is)FOREIGN\s+KEY\s*\((.+)\)\s*REFERENCES\s+(\S+)\s*\((.+)\)(\s*ON\s+DELETE\s+((CASCADE)|(RESTRICT)|(NO\s+ACTION)|(SET\s+NULL)|(SET\s+DEFAULT)))?`)
+var reChk = regexp.MustCompile(`(?is)CHECK\s+\((.+)\)\s*$`)
 
 // Postgres struct
 type Postgres struct {
@@ -172,9 +173,16 @@ ORDER BY oid`)
 				Comment:          constraintComment.String,
 			}
 
-			// TODO: on delete - scan parameters
+			ss := reChk.FindStringSubmatch(constraintDef)
+			if len(ss) > 0 {
+				constraint.Check = strings.TrimSpace(ss[1])
+			}
 
 			if constraintType == "f" {
+				ss = reFK.FindStringSubmatch(constraintDef)
+				if len(ss) > 0 {
+					constraint.OnDelete = strings.TrimSpace(ss[5])
+				}
 				relation := &schema.Relation{
 					Table: table,
 					Def:   constraintDef,
@@ -266,6 +274,18 @@ ORDER BY attr.attnum;
 				Default:  columnDefault,
 				Comment:  columnComment.String,
 			}
+			// find in pk's
+			for _, cstr := range constraints {
+				if cstr.Type != schema.TypePK {
+					continue
+				}
+				for _, cscol := range cstr.Columns {
+					if cscol == columnName {
+						column.PrimaryKey = true
+						break
+					}
+				}
+			}
 			columns = append(columns, column)
 		}
 		table.Columns = columns
@@ -312,7 +332,6 @@ ORDER BY attr.attnum;
 				Where:        idxprs.Where,
 				Columns:      arrayRemoveNull(indexColumnNames),
 				Comment:      indexComment.String,
-				// TODO: Where and With
 			}
 			if strings.ReplaceAll(idxprs.ColDef, " ", "") == "("+strings.Join(index.Columns, ",")+")" {
 				index.ColDef = ""
@@ -329,14 +348,17 @@ ORDER BY attr.attnum;
 
 	// Relations
 	for _, r := range relations {
-		result := reFK.FindAllStringSubmatch(r.Def, -1)
+		result := reFK.FindStringSubmatch(r.Def)
+		if len(result) == 0 {
+			continue
+		}
 		strColumns := []string{}
-		for _, c := range strings.Split(result[0][1], ", ") {
+		for _, c := range strings.Split(result[1], ", ") {
 			strColumns = append(strColumns, strings.ReplaceAll(c, `"`, ""))
 		}
-		strParentTable := strings.ReplaceAll(result[0][2], `"`, "")
+		strParentTable := strings.ReplaceAll(result[2], `"`, "")
 		strParentColumns := []string{}
-		for _, c := range strings.Split(result[0][3], ", ") {
+		for _, c := range strings.Split(result[3], ", ") {
 			strParentColumns = append(strParentColumns, strings.ReplaceAll(c, `"`, ""))
 		}
 		for _, c := range strColumns {
@@ -474,7 +496,7 @@ func detectFullTableName(name string, searchPaths, fullTableNames []string) (str
 func convertConstraintType(t string) string {
 	switch t {
 	case "p":
-		return "PRIMARY KEY"
+		return schema.TypePK
 	case "u":
 		return "UNIQUE"
 	case "f":

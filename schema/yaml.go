@@ -30,8 +30,8 @@ type YamlRelation struct {
 
 type YamlConstraint struct {
 	Type             string   `yaml:"type,omitempty"`
-	Def              string   `yaml:"def,omitempty"`
-	Table            *string  `yaml:"table,omitempty"`
+	Check            string   `json:"check,omitempty"`
+	OnDelete         string   `json:"onDelete,omitempty"`
 	ReferenceTable   *string  `yaml:"referenceTable,omitempty"`
 	Columns          []string `yaml:"columns,flow"`
 	ReferenceColumns []string `yaml:"referenceColumns,flow"`
@@ -51,9 +51,10 @@ type YamlIndex struct {
 }
 
 type YamlColumn struct {
-	Type     string  `yaml:"type"`
-	Nullable bool    `yaml:"nullable,omitempty"`
-	Default  *string `yaml:"default,omitempty"`
+	Type       string  `yaml:"type"`
+	Nullable   bool    `yaml:"nullable,omitempty"`
+	PrimaryKey bool    `yaml:"pk,omitempty"`
+	Default    *string `yaml:"default,omitempty"`
 }
 
 func (s *Schema) MarshalYAML() ([]byte, error) {
@@ -79,9 +80,10 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 				defval = &(c.Default.String)
 			}
 			yt.Columns[c.Name] = &YamlColumn{
-				Type:     c.Type,
-				Default:  defval,
-				Nullable: c.Nullable,
+				Type:       c.Type,
+				Default:    defval,
+				Nullable:   c.Nullable,
+				PrimaryKey: c.PrimaryKey,
 			}
 		}
 		for _, idx := range t.Indexes {
@@ -101,8 +103,8 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 		for _, cs := range t.Constraints {
 			yt.Constraints[cs.Name] = &YamlConstraint{
 				Type:             cs.Type,
-				Def:              cs.Def,
-				Table:            cs.Table,
+				Check:            cs.Check,
+				OnDelete:         cs.OnDelete,
 				ReferenceTable:   cs.ReferenceTable,
 				Columns:          cs.Columns,
 				ReferenceColumns: cs.ReferenceColumns,

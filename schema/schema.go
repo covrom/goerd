@@ -12,6 +12,7 @@ import (
 
 const (
 	TypeFK = "FOREIGN KEY"
+	TypePK = "PRIMARY KEY"
 )
 
 // Index is the struct for database index
@@ -37,6 +38,8 @@ type Constraint struct {
 	Name             string   `json:"name"`
 	Type             string   `json:"type"`
 	Def              string   `json:"def"`
+	Check            string   `json:"check"`
+	OnDelete         string   `json:"onDelete"`
 	Table            *string  `json:"table"`
 	ReferenceTable   *string  `json:"reference_table" yaml:"referenceTable"`
 	Columns          []string `json:"columns"`
@@ -56,6 +59,7 @@ type Column struct {
 	Name            string         `json:"name"`
 	Type            string         `json:"type"`
 	Nullable        bool           `json:"nullable"`
+	PrimaryKey      bool           `json:"pk"`
 	Default         sql.NullString `json:"default"`
 	Comment         string         `json:"comment"`
 	ParentRelations []*Relation    `json:"-"`
