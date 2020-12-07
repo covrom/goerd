@@ -100,7 +100,6 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 					continue
 				}
 			}
-
 			yt.Indexes[idx.Name] = &YamlIndex{
 				IsClustered:  idx.IsClustered,
 				IsPrimary:    idx.IsPrimary,
