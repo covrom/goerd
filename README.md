@@ -1,4 +1,4 @@
-# goerd
+# goerd WIP
 
 This tool allows you to turn schemas into instructions for the database, including migrations between schemas. Create easy-to-read data models as contracts for agreement between architects, development teams, and team leaders. This tool provides agility to change the huge data model.
 
