@@ -84,6 +84,7 @@ type Relation struct {
 	Columns       []*Column `json:"columns"`
 	ParentTable   *Table    `json:"parent_table" yaml:"parentTable"`
 	ParentColumns []*Column `json:"parent_columns" yaml:"parentColumns"`
+	OnDelete      string    `json:"onDelete"`
 	Def           string    `json:"def"`
 }
 

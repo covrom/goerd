@@ -25,7 +25,7 @@ type YamlTable struct {
 type YamlRelation struct {
 	Columns       []string `yaml:"columns,flow"`
 	ParentColumns []string `yaml:"parentColumns,flow"`
-	Def           string   `yaml:"def,omitempty"`
+	OnDelete      string   `yaml:"onDelete,omitempty"`
 }
 
 type YamlConstraint struct {
@@ -131,7 +131,7 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 				continue
 			}
 			yr := &YamlRelation{
-				Def:           r.Def,
+				OnDelete:      r.OnDelete,
 				Columns:       make([]string, len(r.Columns)),
 				ParentColumns: make([]string, len(r.ParentColumns)),
 			}

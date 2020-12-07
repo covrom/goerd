@@ -184,8 +184,9 @@ ORDER BY oid`)
 					constraint.OnDelete = strings.TrimSpace(ss[5])
 				}
 				relation := &schema.Relation{
-					Table: table,
-					Def:   constraintDef,
+					Table:    table,
+					OnDelete: constraint.OnDelete,
+					Def:      constraintDef,
 				}
 				relations = append(relations, relation)
 			}
