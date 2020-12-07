@@ -8,3 +8,6 @@ if [ ! "$(docker ps -q -f name=pgsql1)" ]; then
     docker run --name=pgsql1 -p 5432:5432 -v "/opt/databases/postgres":/var/lib/postgresql/data -e POSTGRES_PASSWORD=goerd -e POSTGRES_DB=goerd -d postgres:11
     ss -tulpn | grep 5432
 fi
+
+go build .
+./goerd -dsn "postgres://postgres:goerd@localhost:5432/goerd?sslmode=disable"

@@ -62,7 +62,7 @@ rectangle "{{ $t.Name }}" {
 
 ' relations
 {{- range $j, $r := .Schema.Relations }}
-"{{ $r.Table.Name }}" }-- "{{ $r.ParentTable.Name }}" : "{{ $r.Def | html }}"
+"{{ $r.Table.Name }}" }-- "{{ $r.ParentTable.Name }}" : "{{ $r.OnDelete | html }}"
 {{- end }}
 
 @enduml
