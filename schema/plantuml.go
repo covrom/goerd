@@ -6,20 +6,17 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/covrom/goerd/dict"
 	"github.com/pkg/errors"
 )
 
 // PlantUML struct
 type PlantUML struct {
-	Dict     *dict.Dict
 	Distance int
 }
 
 // New return PlantUML
-func NewPlantUML(d *dict.Dict, distance int) *PlantUML {
+func NewPlantUML(distance int) *PlantUML {
 	return &PlantUML{
-		Dict:     d,
 		Distance: distance,
 	}
 }
@@ -47,6 +44,10 @@ rectangle "{{ $t.Name }}" {
 	{{- end }}
 	{{- range $ii, $c := $t.Columns }}
 		{{ $c.Name | html }} <font color="#666666">[{{ $c.Type | html }}]</font>
+	{{- end }}
+	--
+	{{- range $ii, $c := $t.Constraints }}
+	{{ $c.Def | html }}
 	{{- end }}
 	}
 	{{- range $ii, $c := $t.Indexes }}
@@ -80,7 +81,7 @@ func (p *PlantUML) OutputSchema(wr io.Writer, s *Schema) error {
 
 	ts := p.schemaTemplate()
 
-	tmpl := template.Must(template.New(s.Name).Funcs(Funcs(p.Dict)).Parse(ts))
+	tmpl := template.Must(template.New(s.Name).Funcs(Funcs()).Parse(ts))
 	err := tmpl.Execute(wr, map[string]interface{}{
 		"Schema":      s,
 		"showComment": false,
@@ -124,7 +125,7 @@ func contains(rs []*Relation, e *Relation) bool {
 	return false
 }
 
-func Funcs(d *dict.Dict) map[string]interface{} {
+func Funcs() map[string]interface{} {
 	return template.FuncMap{
 		"nl2br": func(text string) string {
 			r := strings.NewReplacer("\r\n", "<br>", "\n", "<br>", "\r", "<br>")
@@ -146,13 +147,10 @@ func Funcs(d *dict.Dict) map[string]interface{} {
 			r := strings.NewReplacer("\r\n", "\\n", "\n", "\\n", "\r", "\\n")
 			return r.Replace(text)
 		},
-		"lookup": func(text string) string {
-			return d.Lookup(text)
-		},
 	}
 }
 
 func (s *Schema) SavePlantUml(wr io.Writer, distance int) error {
-	o := NewPlantUML(s.Driver.Meta.Dict, distance)
+	o := NewPlantUML(distance)
 	return o.OutputSchema(wr, s)
 }

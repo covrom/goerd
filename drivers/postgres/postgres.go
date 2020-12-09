@@ -29,12 +29,6 @@ func New(db *sql.DB) *Postgres {
 
 // Analyze PostgreSQL database schema
 func (p *Postgres) Analyze(s *schema.Schema) error {
-	d, err := p.Info()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.Driver = d
-
 	// current schema
 	var currentSchema string
 	schemaRows, err := p.db.Query(`SELECT current_schema()`)
@@ -48,7 +42,7 @@ func (p *Postgres) Analyze(s *schema.Schema) error {
 			return errors.WithStack(err)
 		}
 	}
-	s.Driver.Meta.CurrentSchema = currentSchema
+	s.CurrentSchema = currentSchema
 
 	// search_path
 	var searchPaths string
@@ -63,7 +57,7 @@ func (p *Postgres) Analyze(s *schema.Schema) error {
 			return errors.WithStack(err)
 		}
 	}
-	s.Driver.Meta.SearchPaths = strings.Split(searchPaths, ", ")
+	s.SearchPaths = strings.Split(searchPaths, ", ")
 
 	fullTableNames := []string{}
 
@@ -193,44 +187,11 @@ ORDER BY oid`)
 					Def:      constraintDef,
 				}
 				relations = append(relations, relation)
+			} else {
+				constraints = append(constraints, constraint)
 			}
-			constraints = append(constraints, constraint)
 		}
 		table.Constraints = constraints
-
-		// triggers
-		triggerRows, err := p.db.Query(`
-SELECT tgname, pg_get_triggerdef(trig.oid), descr.description AS comment
-FROM pg_trigger AS trig
-LEFT JOIN pg_description AS descr ON trig.oid = descr.objoid
-WHERE tgisinternal = false
-AND tgrelid = $1::oid
-ORDER BY tgrelid
-`, tableOid)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		defer triggerRows.Close()
-
-		triggers := []*schema.Trigger{}
-		for triggerRows.Next() {
-			var (
-				triggerName    string
-				triggerDef     string
-				triggerComment sql.NullString
-			)
-			err = triggerRows.Scan(&triggerName, &triggerDef, &triggerComment)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			trigger := &schema.Trigger{
-				Name:    triggerName,
-				Def:     triggerDef,
-				Comment: triggerComment.String,
-			}
-			triggers = append(triggers, trigger)
-		}
-		table.Triggers = triggers
 
 		// columns
 		columnRows, err := p.db.Query(`
@@ -343,7 +304,21 @@ ORDER BY attr.attnum;
 			if strings.ReplaceAll(idxprs.ColDef, " ", "") == "("+strings.Join(index.Columns, ",")+")" {
 				index.ColDef = ""
 			}
-
+			if index.MethodName == "btree" &&
+				index.Where == "" && index.With == "" &&
+				!index.Concurrently && !index.IsClustered {
+				csfnd := false
+				for _, cs := range table.Constraints {
+					if cs.Name == index.Name &&
+						(cs.Type == schema.TypeUQ || cs.Type == schema.TypePK) {
+						csfnd = true
+						break
+					}
+				}
+				if csfnd {
+					continue
+				}
+			}
 			indexes = append(indexes, index)
 		}
 		table.Indexes = indexes
@@ -377,7 +352,7 @@ ORDER BY attr.attnum;
 			column.ParentRelations = append(column.ParentRelations, r)
 		}
 
-		dn, err := detectFullTableName(strParentTable, s.Driver.Meta.SearchPaths, fullTableNames)
+		dn, err := detectFullTableName(strParentTable, s.SearchPaths, fullTableNames)
 		if err != nil {
 			return err
 		}
@@ -400,25 +375,6 @@ ORDER BY attr.attnum;
 	s.Relations = relations
 
 	return nil
-}
-
-// Info return schema.Driver
-func (p *Postgres) Info() (*schema.Driver, error) {
-	var v string
-	row := p.db.QueryRow(`SELECT version();`)
-	err := row.Scan(&v)
-	if err != nil {
-		return nil, err
-	}
-
-	name := "postgres"
-
-	d := &schema.Driver{
-		Name:            name,
-		DatabaseVersion: v,
-		Meta:            &schema.DriverMeta{},
-	}
-	return d, nil
 }
 
 func (p *Postgres) queryForConstraints() string {
@@ -505,7 +461,7 @@ func convertConstraintType(t string) string {
 	case "p":
 		return schema.TypePK
 	case "u":
-		return "UNIQUE"
+		return schema.TypeUQ
 	case "f":
 		return schema.TypeFK
 	case "c":

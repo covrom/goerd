@@ -6,13 +6,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/covrom/goerd/dict"
 	"github.com/pkg/errors"
 )
 
 const (
 	TypeFK = "FOREIGN KEY"
 	TypePK = "PRIMARY KEY"
+	TypeUQ = "UNIQUE"
 )
 
 // Index is the struct for database index
@@ -47,13 +47,6 @@ type Constraint struct {
 	Comment          string   `json:"comment"`
 }
 
-// Trigger is the struct for database trigger
-type Trigger struct {
-	Name    string `json:"name"`
-	Def     string `json:"def"`
-	Comment string `json:"comment"`
-}
-
 // Column is the struct for table column
 type Column struct {
 	Name            string         `json:"name"`
@@ -74,7 +67,6 @@ type Table struct {
 	Columns     []*Column     `json:"columns"`
 	Indexes     []*Index      `json:"indexes"`
 	Constraints []*Constraint `json:"constraints"`
-	Triggers    []*Trigger    `json:"triggers"`
 	Def         string        `json:"def"`
 }
 
@@ -88,31 +80,19 @@ type Relation struct {
 	Def           string    `json:"def"`
 }
 
-type DriverMeta struct {
-	CurrentSchema string     `json:"current_schema,omitempty" yaml:"currentSchema,omitempty"`
-	SearchPaths   []string   `json:"search_paths,omitempty" yaml:"searchPaths,omitempty"`
-	Dict          *dict.Dict `json:"dict,omitempty"`
-}
-
-// Driver is the struct for tbls driver information
-type Driver struct {
-	Name            string      `json:"name"`
-	DatabaseVersion string      `json:"database_version" yaml:"databaseVersion"`
-	Meta            *DriverMeta `json:"meta"`
-}
-
 // Schema is the struct for database schema
 type Schema struct {
-	Name      string      `json:"name"`
-	Desc      string      `json:"desc"`
-	Tables    []*Table    `json:"tables"`
-	Relations []*Relation `json:"relations"`
-	Driver    *Driver     `json:"driver"`
+	Name          string      `json:"name"`
+	Desc          string      `json:"desc"`
+	Tables        []*Table    `json:"tables"`
+	Relations     []*Relation `json:"relations"`
+	CurrentSchema string      `json:"currentSchema"`
+	SearchPaths   []string    `json:"searchPaths,omitempty"`
 }
 
 func (s *Schema) NormalizeTableName(name string) string {
-	if s.Driver != nil && !strings.Contains(name, ".") {
-		return fmt.Sprintf("%s.%s", s.Driver.Meta.CurrentSchema, name)
+	if !strings.Contains(name, ".") {
+		return fmt.Sprintf("%s.%s", s.CurrentSchema, name)
 	}
 	return name
 }
@@ -198,16 +178,6 @@ func (t *Table) FindConstraintByName(name string) (*Constraint, error) {
 	return nil, errors.WithStack(fmt.Errorf("not found constraint '%s' on table '%s'", name, t.Name))
 }
 
-// FindTriggerByName find trigger by trigger name
-func (t *Table) FindTriggerByName(name string) (*Trigger, error) {
-	for _, trig := range t.Triggers {
-		if trig.Name == name {
-			return trig, nil
-		}
-	}
-	return nil, errors.WithStack(fmt.Errorf("not found trigger '%s' on table '%s'", name, t.Name))
-}
-
 // FindConstrainsByColumnName find constraint by column name
 func (t *Table) FindConstrainsByColumnName(name string) []*Constraint {
 	cts := []*Constraint{}
@@ -222,7 +192,7 @@ func (t *Table) FindConstrainsByColumnName(name string) []*Constraint {
 }
 
 // Sort schema tables, columns, relations, and constrains
-func (s *Schema) Sort() error {
+func (s *Schema) Sort() {
 	for _, t := range s.Tables {
 		for _, c := range t.Columns {
 			sort.SliceStable(c.ParentRelations, func(i, j int) bool {
@@ -241,9 +211,6 @@ func (s *Schema) Sort() error {
 		sort.SliceStable(t.Constraints, func(i, j int) bool {
 			return t.Constraints[i].Name < t.Constraints[j].Name
 		})
-		sort.SliceStable(t.Triggers, func(i, j int) bool {
-			return t.Triggers[i].Name < t.Triggers[j].Name
-		})
 	}
 	sort.SliceStable(s.Tables, func(i, j int) bool {
 		return s.Tables[i].Name < s.Tables[j].Name
@@ -251,7 +218,6 @@ func (s *Schema) Sort() error {
 	sort.SliceStable(s.Relations, func(i, j int) bool {
 		return s.Relations[i].Table.Name < s.Relations[j].Table.Name
 	})
-	return nil
 }
 
 // Repair column relations
@@ -265,9 +231,6 @@ func (s *Schema) Repair() error {
 		}
 		if len(t.Constraints) == 0 {
 			t.Constraints = nil
-		}
-		if len(t.Triggers) == 0 {
-			t.Triggers = nil
 		}
 	}
 

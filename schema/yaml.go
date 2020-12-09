@@ -59,7 +59,7 @@ type YamlColumn struct {
 func (s *Schema) MarshalYAML() ([]byte, error) {
 	ys := &YamlSchema{
 		Name:   s.Name,
-		Schema: s.Driver.Meta.CurrentSchema,
+		Schema: s.CurrentSchema,
 		Tables: make(map[string]*YamlTable, len(s.Tables)),
 	}
 	for _, t := range s.Tables {
@@ -85,19 +85,6 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 			}
 		}
 		for _, idx := range t.Indexes {
-			// search in constraints
-			if idx.MethodName == "btree" && idx.Where == "" && idx.With == "" && !idx.Concurrently && !idx.IsClustered {
-				csfnd := false
-				for _, cs := range t.Constraints {
-					if cs.Name == idx.Name {
-						csfnd = true
-						break
-					}
-				}
-				if csfnd {
-					continue
-				}
-			}
 			yt.Indexes[idx.Name] = &YamlIndex{
 				IsClustered:  idx.IsClustered,
 				IsPrimary:    idx.IsPrimary,
@@ -114,10 +101,6 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 		for _, cs := range t.Constraints {
 			if cs.Type == TypePK {
 				// present as 'pk: true' in columns
-				continue
-			}
-			if cs.Type == TypeFK {
-				// present in relations
 				continue
 			}
 			ycs := &YamlConstraint{
@@ -166,10 +149,15 @@ func (s *Schema) UnmarshalYAML(data []byte) error {
 	s.Tables = make([]*Table, 0, len(ys.Tables))
 	for name, yt := range ys.Tables {
 		t := &Table{
-			Name: name,
-			Type: yt.Type,
-			Def:  yt.Def,
+			Name:        name,
+			Type:        yt.Type,
+			Def:         yt.Def,
+			Columns:     make([]*Column, 0, len(yt.Columns)),
+			Indexes:     make([]*Index, 0, len(yt.Indexes)),
+			Constraints: make([]*Constraint, 0, len(yt.Constraints)),
 		}
+
+		// TODO:
 
 		s.Tables = append(s.Tables, t)
 	}
