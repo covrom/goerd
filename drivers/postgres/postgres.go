@@ -241,6 +241,8 @@ SELECT
     CASE
         WHEN 'character varying'::regtype = ANY(ARRAY[attr.atttypid, tp.typelem]) THEN
             REPLACE(format_type(attr.atttypid, attr.atttypmod), 'character varying', 'varchar')
+		WHEN 'timestamp with time zone'::regtype = ANY(ARRAY[attr.atttypid, tp.typelem]) THEN
+            REPLACE(format_type(attr.atttypid, attr.atttypmod), 'timestamp with time zone', 'timestamptz')
         ELSE format_type(attr.atttypid, attr.atttypmod)
     END AS data_type,
     descr.description AS comment
