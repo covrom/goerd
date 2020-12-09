@@ -11,6 +11,7 @@ Features (in progress):
 - Using https://github.com/jackc/pgx
 - Run as grpc-microservice
 - Use as library
+- [Check rules for schema](https://wiki.postgresql.org/wiki/Don't_Do_This)
 
 Example of generated plantuml:
 
