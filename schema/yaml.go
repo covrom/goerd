@@ -18,7 +18,6 @@ type YamlTable struct {
 	Indexes     map[string]*YamlIndex      `yaml:"indexes"`
 	Constraints map[string]*YamlConstraint `yaml:"constraints"`
 	Relations   map[string]*YamlRelation   `yaml:"relations"` // key = parent table
-	Triggers    map[string]string          `yaml:"triggers"`
 	Def         string                     `yaml:"def,omitempty"`
 }
 
@@ -69,7 +68,6 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 			Columns:     make(map[string]*YamlColumn, len(t.Columns)),
 			Constraints: make(map[string]*YamlConstraint, len(t.Constraints)),
 			Indexes:     make(map[string]*YamlIndex, len(t.Indexes)),
-			Triggers:    make(map[string]string, len(t.Triggers)),
 			Relations:   make(map[string]*YamlRelation, len(t.Constraints)),
 			Type:        t.Type,
 		}
@@ -122,9 +120,6 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 				Columns:          cs.Columns,
 				ReferenceColumns: cs.ReferenceColumns,
 			}
-		}
-		for _, tr := range t.Triggers {
-			yt.Triggers[tr.Name] = tr.Def
 		}
 		for _, r := range s.Relations {
 			if r.Table.Name != t.Name {
