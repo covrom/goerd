@@ -161,14 +161,18 @@ ORDER BY oid`)
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			rt := constraintReferenceTable.String
+			prt := (*string)(nil)
+			if constraintReferenceTable.Valid && constraintReferenceTable.String != "" {
+				prt = &constraintReferenceTable.String
+			}
+
 			constraint := &schema.Constraint{
 				Name:             constraintName,
 				Type:             convertConstraintType(constraintType),
 				Def:              constraintDef,
 				Table:            &table.Name,
 				Columns:          arrayRemoveNull(constraintColumnNames),
-				ReferenceTable:   &rt,
+				ReferenceTable:   prt,
 				ReferenceColumns: arrayRemoveNull(constraintReferenceColumnNames),
 				Comment:          constraintComment.String,
 			}

@@ -15,9 +15,9 @@ type YamlSchema struct {
 type YamlTable struct {
 	Type        string                     `yaml:"type,omitempty"`
 	Columns     map[string]*YamlColumn     `yaml:"columns"`
-	Indexes     map[string]*YamlIndex      `yaml:"indexes"`
-	Constraints map[string]*YamlConstraint `yaml:"constraints"`
-	Relations   map[string]*YamlRelation   `yaml:"relations"` // key = parent table
+	Indexes     map[string]*YamlIndex      `yaml:"indexes,omitempty"`
+	Constraints map[string]*YamlConstraint `yaml:"constraints,omitempty"`
+	Relations   map[string]*YamlRelation   `yaml:"relations,omitempty"` // key = parent table
 	Def         string                     `yaml:"def,omitempty"`
 }
 
@@ -31,9 +31,9 @@ type YamlConstraint struct {
 	Type             string   `yaml:"type,omitempty"`
 	Check            string   `json:"check,omitempty"`
 	OnDelete         string   `json:"onDelete,omitempty"`
-	ReferenceTable   *string  `yaml:"referenceTable,omitempty"`
+	ReferenceTable   string   `yaml:"referenceTable,omitempty"`
 	Columns          []string `yaml:"columns,flow"`
-	ReferenceColumns []string `yaml:"referenceColumns,flow"`
+	ReferenceColumns []string `yaml:"referenceColumns,flow,omitempty"`
 }
 
 type YamlIndex struct {
@@ -112,14 +112,27 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 			}
 		}
 		for _, cs := range t.Constraints {
-			yt.Constraints[cs.Name] = &YamlConstraint{
+			if cs.Type == TypePK {
+				// present as 'pk: true' in columns
+				continue
+			}
+			if cs.Type == TypeFK {
+				// present in relations
+				continue
+			}
+			ycs := &YamlConstraint{
 				Type:             cs.Type,
 				Check:            cs.Check,
 				OnDelete:         cs.OnDelete,
-				ReferenceTable:   cs.ReferenceTable,
 				Columns:          cs.Columns,
 				ReferenceColumns: cs.ReferenceColumns,
 			}
+			if cs.ReferenceTable != nil {
+				ycs.ReferenceTable = *cs.ReferenceTable
+			} else {
+				ycs.ReferenceColumns = nil
+			}
+			yt.Constraints[cs.Name] = ycs
 		}
 		for _, r := range s.Relations {
 			if r.Table.Name != t.Name {
