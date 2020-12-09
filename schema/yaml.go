@@ -41,7 +41,7 @@ type YamlIndex struct {
 	IsUnique     bool     `yaml:"isUnique,omitempty"`
 	IsClustered  bool     `yaml:"isClustered,omitempty"`
 	Concurrently bool     `yaml:"concurrently,omitempty"`
-	MethodName   string   `yaml:"methodName,omitempty"`
+	MethodName   string   `yaml:"method,omitempty"`
 	Columns      []string `yaml:"columns,flow"`
 	ColDef       string   `yaml:"coldef,omitempty"`
 	With         string   `yaml:"with,omitempty"`
