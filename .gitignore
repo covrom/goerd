@@ -18,3 +18,4 @@ goerd
 schema.puml
 schema copy.yaml
 sql/test_ddl_full.sql
+schema/yaml_test.go
