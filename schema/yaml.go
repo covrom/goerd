@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"database/sql"
 	"io"
 
 	"github.com/goccy/go-yaml"
@@ -147,9 +148,9 @@ func (s *Schema) UnmarshalYAML(data []byte) error {
 	}
 	*s = Schema{}
 	s.Tables = make([]*Table, 0, len(ys.Tables))
-	for name, yt := range ys.Tables {
+	for tname, yt := range ys.Tables {
 		t := &Table{
-			Name:        name,
+			Name:        tname,
 			Type:        yt.Type,
 			Def:         yt.Def,
 			Columns:     make([]*Column, 0, len(yt.Columns)),
@@ -157,37 +158,107 @@ func (s *Schema) UnmarshalYAML(data []byte) error {
 			Constraints: make([]*Constraint, 0, len(yt.Constraints)),
 		}
 
-		// TODO:
+		for ycname, yc := range yt.Columns {
+			c := &Column{
+				Name:       ycname,
+				Type:       yc.Type,
+				Nullable:   yc.Nullable,
+				PrimaryKey: yc.PrimaryKey,
+			}
+			defnul := sql.NullString{}
+			if yc.Default != nil {
+				defnul.String = *yc.Default
+				defnul.Valid = true
+			}
+			c.Default = defnul
 
+			t.Columns = append(t.Columns, c)
+		}
+
+		for ycname, yc := range yt.Constraints {
+			c := &Constraint{
+				Name:             ycname,
+				Type:             yc.Type,
+				Check:            yc.Check,
+				OnDelete:         yc.OnDelete,
+				Table:            &t.Name,
+				ReferenceTable:   &yc.ReferenceTable,
+				Columns:          yc.Columns,
+				ReferenceColumns: yc.ReferenceColumns,
+			}
+			t.Constraints = append(t.Constraints, c)
+		}
+
+		for yiname, yi := range yt.Indexes {
+			idx := &Index{
+				Name:         yiname,
+				IsPrimary:    yi.IsPrimary,
+				IsUnique:     yi.IsUnique,
+				IsClustered:  yi.IsClustered,
+				MethodName:   yi.MethodName,
+				Table:        &t.Name,
+				Columns:      yi.Columns,
+				Concurrently: yi.Concurrently,
+				ColDef:       yi.ColDef,
+				With:         yi.With,
+				Tablespace:   yi.Tablespace,
+				Where:        yi.Where,
+			}
+			t.Indexes = append(t.Indexes, idx)
+		}
 		s.Tables = append(s.Tables, t)
 	}
-	return nil
-}
 
-// YAML struct
-type YAML struct{}
+	for tname, yt := range ys.Tables {
+		t, err := s.FindTableByName(tname)
+		if err != nil {
+			return err
+		}
+		for yrname, yr := range yt.Relations {
+			relt, err := s.FindTableByName(yrname)
+			if err != nil {
+				return err
+			}
+			r := &Relation{
+				Table:         t,
+				ParentTable:   relt,
+				Columns:       make([]*Column, 0, len(yr.Columns)),
+				ParentColumns: make([]*Column, 0, len(yr.ParentColumns)),
+				OnDelete:      yr.OnDelete,
+			}
+			for _, yrcl := range yr.Columns {
+				cl, err := t.FindColumnByName(yrcl)
+				if err != nil {
+					return err
+				}
+				r.Columns = append(r.Columns, cl)
+				cl.ParentRelations = append(cl.ParentRelations, r)
+			}
+			for _, yrpcl := range yr.ParentColumns {
+				pcl, err := relt.FindColumnByName(yrpcl)
+				if err != nil {
+					return err
+				}
+				r.ParentColumns = append(r.ParentColumns, pcl)
+				pcl.ChildRelations = append(pcl.ChildRelations, r)
+			}
 
-// OutputSchema output YAML format for full relation.
-func (j *YAML) OutputSchema(wr io.Writer, s *Schema) error {
-	encoder := yaml.NewEncoder(wr)
-	err := encoder.Encode(s)
-	if err != nil {
-		return err
+			s.Relations = append(s.Relations, r)
+		}
 	}
-	return nil
-}
 
-// OutputTable output YAML format for table.
-func (j *YAML) OutputTable(wr io.Writer, t *Table) error {
-	encoder := yaml.NewEncoder(wr)
-	err := encoder.Encode(t)
-	if err != nil {
-		return err
-	}
+	s.Sort()
+
 	return nil
 }
 
 func (s *Schema) SaveYaml(wr io.Writer) error {
-	o := new(YAML)
-	return o.OutputSchema(wr, s)
+	enc := yaml.NewEncoder(wr)
+	return enc.Encode(s)
+}
+
+func (s *Schema) LoadYaml(r io.Reader) error {
+	*s = Schema{}
+	d := yaml.NewDecoder(r)
+	return d.Decode(s)
 }
