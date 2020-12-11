@@ -146,7 +146,10 @@ func (s *Schema) UnmarshalYAML(data []byte) error {
 	if err := yaml.Unmarshal(data, &ys); err != nil {
 		return err
 	}
-	*s = Schema{}
+	*s = Schema{
+		Name:          ys.Name,
+		CurrentSchema: ys.Schema,
+	}
 	s.Tables = make([]*Table, 0, len(ys.Tables))
 	for tname, yt := range ys.Tables {
 		t := &Table{
