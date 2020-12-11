@@ -142,7 +142,7 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 }
 
 func (s *Schema) UnmarshalYAML(data []byte) error {
-	ys := &YamlSchema{}
+	ys := YamlSchema{}
 	if err := yaml.Unmarshal(data, &ys); err != nil {
 		return err
 	}
