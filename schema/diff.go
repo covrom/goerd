@@ -1,5 +1,7 @@
 package schema
 
+import "fmt"
+
 var PatchDropDisable bool = false
 
 type PatchTable struct {
@@ -20,10 +22,18 @@ func (t *PatchTable) GenerateSQL() []string {
 }
 func (t *PatchTable) create() []string { return nil }
 func (t *PatchTable) alter() []string  { return nil }
-func (t *PatchTable) drop() []string   { return nil }
+func (t *PatchTable) drop() []string {
+	if PatchDropDisable {
+		return nil
+	}
+	return []string{
+		fmt.Sprintf("DROP TABLE IF EXISTS %s", t.from.Name),
+	}
+}
 
 type PatchColumn struct {
-	from, to *Column
+	from, to  *Column
+	tableName string
 }
 
 func (c *PatchColumn) GenerateSQL() []string {
@@ -37,7 +47,14 @@ func (c *PatchColumn) GenerateSQL() []string {
 }
 func (c *PatchColumn) create() []string { return nil }
 func (c *PatchColumn) alter() []string  { return nil }
-func (c *PatchColumn) drop() []string   { return nil }
+func (c *PatchColumn) drop() []string {
+	if PatchDropDisable {
+		return nil
+	}
+	return []string{
+		fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s", c.tableName, c.from.Name),
+	}
+}
 
 type PatchIndex struct {
 	from, to *Index
@@ -54,10 +71,16 @@ func (i *PatchIndex) GenerateSQL() []string {
 }
 func (i *PatchIndex) create() []string { return nil }
 func (i *PatchIndex) alter() []string  { return nil }
-func (i *PatchIndex) drop() []string   { return nil }
+func (i *PatchIndex) drop() []string {
+	// always drop unused indexes
+	return []string{
+		fmt.Sprintf("DROP INDEX IF EXISTS %s", i.from.Name),
+	}
+}
 
 type PatchConstraint struct {
-	from, to *Constraint
+	from, to  *Constraint
+	tableName string
 }
 
 func (c *PatchConstraint) GenerateSQL() []string {
@@ -71,24 +94,43 @@ func (c *PatchConstraint) GenerateSQL() []string {
 }
 func (c *PatchConstraint) create() []string { return nil }
 func (c *PatchConstraint) alter() []string  { return nil }
-func (c *PatchConstraint) drop() []string   { return nil }
+func (c *PatchConstraint) drop() []string {
+	// always drop unused constraints
+	return []string{
+		fmt.Sprintf("ALTER TABLE %s DROP CONSTRAINT IF EXISTS %s", c.tableName, c.from.Name),
+	}
+}
 
 type PatchRelation struct {
 	from, to *Relation
 }
 
-func (t *PatchRelation) GenerateSQL() []string {
-	if t.from != nil && t.to != nil {
-		return t.alter()
+func (r *PatchRelation) GenerateSQL() []string {
+	if r.from != nil && r.to != nil {
+		return r.alter()
 	}
-	if t.from == nil {
-		return t.create()
+	if r.from == nil {
+		return r.create()
 	}
-	return t.drop()
+	return r.drop()
 }
-func (t *PatchRelation) create() []string { return nil }
-func (t *PatchRelation) alter() []string  { return nil }
-func (t *PatchRelation) drop() []string   { return nil }
+func (r *PatchRelation) create() []string { return nil }
+func (r *PatchRelation) alter() []string  { return nil }
+func (r *PatchRelation) drop() []string {
+	// TODO:
+	// declare r record;
+	// begin
+	//   for r in (
+	// 	select constraint_name
+	// 	from information_schema.table_constraints
+	// 	where table_name='relationships'
+	// 	and constraint_name like 'fk_%'
+	//   ) loop
+	//   execute CONCAT('ALTER TABLE "relationships" DROP CONSTRAINT '||r.constraint_name);
+	//   end loop;
+	// end;
+	return nil
+}
 
 type PatchSchema struct {
 	CurrentSchema string
@@ -124,7 +166,8 @@ func (s *PatchSchema) Build(from, to *Schema) {
 		s.tables = append(s.tables, pt)
 		for _, c := range t.Columns {
 			pc := &PatchColumn{
-				from: c,
+				tableName: t.Name,
+				from:      c,
 			}
 			if rt != nil {
 				rc, err := rt.FindColumnByName(c.Name)
@@ -148,7 +191,8 @@ func (s *PatchSchema) Build(from, to *Schema) {
 		}
 		for _, c := range t.Constraints {
 			pc := &PatchConstraint{
-				from: c,
+				tableName: t.Name,
+				from:      c,
 			}
 			if rt != nil {
 				rc, err := rt.FindConstraintByName(c.Name)
@@ -178,7 +222,8 @@ func (s *PatchSchema) Build(from, to *Schema) {
 		s.tables = append(s.tables, pt)
 		for _, c := range rt.Columns {
 			pc := &PatchColumn{
-				to: c,
+				tableName: rt.Name,
+				to:        c,
 			}
 			pt.columns = append(pt.columns, pc)
 		}
@@ -190,7 +235,8 @@ func (s *PatchSchema) Build(from, to *Schema) {
 		}
 		for _, c := range rt.Constraints {
 			pc := &PatchConstraint{
-				to: c,
+				tableName: rt.Name,
+				to:        c,
 			}
 			pt.constraints = append(pt.constraints, pc)
 		}
