@@ -1,5 +1,7 @@
 package schema
 
+var PatchDropDisable bool = false
+
 type PatchTable struct {
 	from, to    *Table
 	columns     []*PatchColumn
