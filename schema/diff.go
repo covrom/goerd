@@ -94,6 +94,17 @@ type PatchSchema struct {
 	relations     []*PatchRelation
 }
 
+func (t *PatchSchema) GenerateSQL() (ret []string) {
+	// TODO: using CurrentSchema
+	for _, st := range t.tables {
+		ret = append(ret, st.GenerateSQL()...)
+	}
+	for _, rt := range t.relations {
+		ret = append(ret, rt.GenerateSQL()...)
+	}
+	return
+}
+
 func (s *PatchSchema) Build(from, to *Schema) {
 	s.CurrentSchema = to.CurrentSchema
 	s.tables = make([]*PatchTable, 0, len(from.Tables)+len(to.Tables))
