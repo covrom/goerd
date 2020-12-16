@@ -15,6 +15,17 @@ const (
 	TypeUQ = "UNIQUE"
 )
 
+// Table is the struct for database table
+type Table struct {
+	Name        string        `json:"name"`
+	Type        string        `json:"type"`
+	Comment     string        `json:"comment"`
+	Columns     []*Column     `json:"columns"`
+	Indexes     []*Index      `json:"indexes"`
+	Constraints []*Constraint `json:"constraints"`
+	Def         string        `json:"def"`
+}
+
 // Index is the struct for database index
 type Index struct {
 	Name         string `json:"name"`
@@ -57,17 +68,6 @@ type Column struct {
 	Comment         string         `json:"comment"`
 	ParentRelations []*Relation    `json:"-"`
 	ChildRelations  []*Relation    `json:"-"`
-}
-
-// Table is the struct for database table
-type Table struct {
-	Name        string        `json:"name"`
-	Type        string        `json:"type"`
-	Comment     string        `json:"comment"`
-	Columns     []*Column     `json:"columns"`
-	Indexes     []*Index      `json:"indexes"`
-	Constraints []*Constraint `json:"constraints"`
-	Def         string        `json:"def"`
 }
 
 // Relation is the struct for table relation
@@ -124,7 +124,7 @@ L:
 		for _, rc := range r.Columns {
 			exist := false
 			for _, cc := range cs {
-				if rc == cc {
+				if rc.Name == cc.Name {
 					exist = true
 				}
 			}
@@ -135,7 +135,7 @@ L:
 		for _, rc := range r.ParentColumns {
 			exist := false
 			for _, cc := range pcs {
-				if rc == cc {
+				if rc.Name == cc.Name {
 					exist = true
 				}
 			}

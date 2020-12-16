@@ -1,151 +1,207 @@
 package schema
 
-import (
-	"strings"
+type PatchTable struct {
+	from, to    *Table
+	columns     []*PatchColumn
+	indexes     []*PatchIndex
+	constraints []*PatchConstraint
+}
 
-	"github.com/covrom/diff"
-)
+func (t *PatchTable) GenerateSQL() []string {
+	if t.from != nil && t.to != nil {
+		return t.alter()
+	}
+	if t.from == nil {
+		return t.create()
+	}
+	return t.drop()
+}
+func (t *PatchTable) create() []string { return nil }
+func (t *PatchTable) alter() []string  { return nil }
+func (t *PatchTable) drop() []string   { return nil }
 
-func (t1 *Table) EqualTo(t2 *Table) bool {
-	if t1 == t2 {
-		return true
+type PatchColumn struct {
+	from, to *Column
+}
+
+func (c *PatchColumn) GenerateSQL() []string {
+	if c.from != nil && c.to != nil {
+		return c.alter()
+	}
+	if c.from == nil {
+		return c.create()
+	}
+	return c.drop()
+}
+func (c *PatchColumn) create() []string { return nil }
+func (c *PatchColumn) alter() []string  { return nil }
+func (c *PatchColumn) drop() []string   { return nil }
+
+type PatchIndex struct {
+	from, to *Index
+}
+
+func (i *PatchIndex) GenerateSQL() []string {
+	if i.from != nil && i.to != nil {
+		return i.alter()
+	}
+	if i.from == nil {
+		return i.create()
+	}
+	return i.drop()
+}
+func (i *PatchIndex) create() []string { return nil }
+func (i *PatchIndex) alter() []string  { return nil }
+func (i *PatchIndex) drop() []string   { return nil }
+
+type PatchConstraint struct {
+	from, to *Constraint
+}
+
+func (c *PatchConstraint) GenerateSQL() []string {
+	if c.from != nil && c.to != nil {
+		return c.alter()
+	}
+	if c.from == nil {
+		return c.create()
+	}
+	return c.drop()
+}
+func (c *PatchConstraint) create() []string { return nil }
+func (c *PatchConstraint) alter() []string  { return nil }
+func (c *PatchConstraint) drop() []string   { return nil }
+
+type PatchRelation struct {
+	from, to *Relation
+}
+
+func (t *PatchRelation) GenerateSQL() []string {
+	if t.from != nil && t.to != nil {
+		return t.alter()
+	}
+	if t.from == nil {
+		return t.create()
+	}
+	return t.drop()
+}
+func (t *PatchRelation) create() []string { return nil }
+func (t *PatchRelation) alter() []string  { return nil }
+func (t *PatchRelation) drop() []string   { return nil }
+
+type PatchSchema struct {
+	CurrentSchema string
+	tables        []*PatchTable
+	relations     []*PatchRelation
+}
+
+func (s *PatchSchema) Build(from, to *Schema) {
+	s.CurrentSchema = to.CurrentSchema
+	s.tables = make([]*PatchTable, 0, len(from.Tables)+len(to.Tables))
+	s.relations = make([]*PatchRelation, 0, len(from.Relations)+len(to.Relations))
+
+	// drop or alter tables
+	for _, t := range from.Tables {
+		pt := &PatchTable{
+			from: t,
+		}
+		rt, err := to.FindTableByName(t.Name)
+		if err == nil {
+			pt.to = rt
+		}
+		s.tables = append(s.tables, pt)
+		for _, c := range t.Columns {
+			pc := &PatchColumn{
+				from: c,
+			}
+			if rt != nil {
+				rc, err := rt.FindColumnByName(c.Name)
+				if err == nil {
+					pc.to = rc
+				}
+			}
+			pt.columns = append(pt.columns, pc)
+		}
+		for _, idx := range t.Indexes {
+			pi := &PatchIndex{
+				from: idx,
+			}
+			if rt != nil {
+				ri, err := rt.FindIndexByName(idx.Name)
+				if err == nil {
+					pi.to = ri
+				}
+			}
+			pt.indexes = append(pt.indexes, pi)
+		}
+		for _, c := range t.Constraints {
+			pc := &PatchConstraint{
+				from: c,
+			}
+			if rt != nil {
+				rc, err := rt.FindConstraintByName(c.Name)
+				if err == nil {
+					pc.to = rc
+				}
+			}
+			pt.constraints = append(pt.constraints, pc)
+		}
+	}
+	// create tables
+	for _, rt := range to.Tables {
+		fnd := false
+		for _, t := range s.tables {
+			if t.to == nil {
+				continue
+			}
+			if t.to.Name == rt.Name {
+				fnd = true
+				break
+			}
+		}
+		if fnd {
+			continue
+		}
+		pt := &PatchTable{to: rt}
+		s.tables = append(s.tables, pt)
+		for _, c := range rt.Columns {
+			pc := &PatchColumn{
+				to: c,
+			}
+			pt.columns = append(pt.columns, pc)
+		}
+		for _, idx := range rt.Indexes {
+			pi := &PatchIndex{
+				to: idx,
+			}
+			pt.indexes = append(pt.indexes, pi)
+		}
+		for _, c := range rt.Constraints {
+			pc := &PatchConstraint{
+				to: c,
+			}
+			pt.constraints = append(pt.constraints, pc)
+		}
 	}
 
-	if t1.Name != t2.Name ||
-		t1.Type != t2.Type ||
-		t1.Def != t2.Def {
-		return false
+	// drop or alter relations
+	for _, r := range from.Relations {
+		pt := &PatchRelation{
+			from: r,
+		}
+		rt, err := to.FindRelation(r.Columns, r.ParentColumns)
+		if err == nil {
+			pt.to = rt
+		}
+		s.relations = append(s.relations, pt)
 	}
-
-	// compare columns
-	ct := ColumnTransition{
-		From: t1.Columns,
-		To:   t2.Columns,
+	// create relations
+	for _, r := range to.Relations {
+		pt := &PatchRelation{
+			to: r,
+		}
+		_, err := from.FindRelation(r.Columns, r.ParentColumns)
+		if err != nil {
+			s.relations = append(s.relations, pt)
+		}
 	}
-	ch := diff.Diff(len(ct.From), len(ct.To), &ct)
-	if len(ch) != 0 {
-		return false
-	}
-
-	// compare indexes
-	cit := IndexTransition{
-		From: t1.Indexes,
-		To:   t2.Indexes,
-	}
-	ch = diff.Diff(len(cit.From), len(cit.To), &cit)
-	if len(ch) != 0 {
-		return false
-	}
-
-	// compare constraints
-	ctt := ConstraintTransition{
-		From: t1.Constraints,
-		To:   t2.Constraints,
-	}
-	ch = diff.Diff(len(ctt.From), len(ctt.To), &ctt)
-	if len(ch) != 0 {
-		return false
-	}
-	return true
-}
-
-type TableTransition struct {
-	From, To []*Table
-}
-
-func (d TableTransition) Equal(i, j int) bool {
-	return d.From[i].EqualTo(d.To[j])
-}
-
-func (d TableTransition) Diff() []diff.Change {
-	return diff.Diff(len(d.From), len(d.To), d)
-}
-
-func (c1 *Column) EqualTo(c2 *Column) bool {
-	if c1 == c2 {
-		return true
-	}
-	if c1.Name != c2.Name ||
-		c1.Type != c2.Type ||
-		c1.Nullable != c2.Nullable ||
-		c1.PrimaryKey != c2.PrimaryKey ||
-		c1.Default.String != c2.Default.String ||
-		c1.Default.Valid != c2.Default.Valid {
-		return false
-	}
-	return true
-}
-
-type ColumnTransition struct {
-	From, To []*Column
-}
-
-func (d ColumnTransition) Equal(i, j int) bool {
-	return d.From[i].EqualTo(d.To[j])
-}
-
-func (d ColumnTransition) Diff() []diff.Change {
-	return diff.Diff(len(d.From), len(d.To), d)
-}
-
-func (idx1 *Index) EqualTo(idx2 *Index) bool {
-	if idx1 == idx2 {
-		return true
-	}
-	if idx1.Name != idx2.Name ||
-		idx1.IsPrimary != idx2.IsPrimary ||
-		idx1.IsUnique != idx2.IsUnique ||
-		idx1.IsClustered != idx2.IsClustered ||
-		idx1.MethodName != idx2.MethodName ||
-		idx1.Def != idx2.Def ||
-		strings.Join(idx1.Columns, ",") != strings.Join(idx2.Columns, ",") ||
-		idx1.Concurrently != idx2.Concurrently ||
-		idx1.ColDef != idx2.ColDef ||
-		idx1.With != idx2.With ||
-		idx1.Tablespace != idx2.Tablespace ||
-		idx1.Where != idx2.Where {
-		return false
-	}
-	return true
-}
-
-type IndexTransition struct {
-	From, To []*Index
-}
-
-func (d IndexTransition) Equal(i, j int) bool {
-	return d.From[i].EqualTo(d.To[j])
-}
-
-func (d IndexTransition) Diff() []diff.Change {
-	return diff.Diff(len(d.From), len(d.To), d)
-}
-
-func (c1 *Constraint) EqualTo(c2 *Constraint) bool {
-	if c1 == c2 {
-		return true
-	}
-	if c1.Name != c2.Name ||
-		c1.Type != c2.Type ||
-		c1.Def != c2.Def ||
-		c1.Check != c2.Check ||
-		c1.OnDelete != c2.OnDelete ||
-		*c1.ReferenceTable != *c2.ReferenceTable ||
-		strings.Join(c1.Columns, ",") != strings.Join(c2.Columns, ",") ||
-		strings.Join(c1.ReferenceColumns, ",") != strings.Join(c2.ReferenceColumns, ",") {
-		return false
-	}
-	return true
-}
-
-type ConstraintTransition struct {
-	From, To []*Constraint
-}
-
-func (d ConstraintTransition) Equal(i, j int) bool {
-	return d.From[i].EqualTo(d.To[j])
-}
-
-func (d ConstraintTransition) Diff() []diff.Change {
-	return diff.Diff(len(d.From), len(d.To), d)
 }
