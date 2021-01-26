@@ -1,6 +1,9 @@
 package schema
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 var PatchDropDisable bool = false
 
@@ -20,8 +23,44 @@ func (t *PatchTable) GenerateSQL() []string {
 	}
 	return t.drop()
 }
-func (t *PatchTable) create() []string { return nil }
-func (t *PatchTable) alter() []string  { return nil }
+func (t *PatchTable) create() []string {
+	if t.to.Type != "TABLE" {
+		return []string{
+			fmt.Sprintf("CREATE %s %s AS (\n%s\n)", t.to.Type, t.to.Name, strings.TrimRight(t.to.Def, ";")),
+		}
+	}
+
+	sb := &strings.Builder{}
+	fmt.Fprint(sb, "CREATE TABLE ", t.to.Name, " (\n")
+	crlf := false
+	for _, c := range t.columns {
+		if crlf {
+			sb.WriteString(",\n")
+		} else {
+			crlf = true
+		}
+		sb.WriteString(c.create()[0])
+	}
+	for _, cs := range t.constraints {
+		if crlf {
+			sb.WriteString(",\n")
+		} else {
+			crlf = true
+		}
+		sb.WriteString(cs.create()[0])
+	}
+	fmt.Fprint(sb, ")")
+
+	ret := []string{sb.String()}
+
+	for _, idx := range t.indexes {
+		idx.to.Table = &t.to.Name
+		ret = append(ret, idx.create()...)
+	}
+
+	return ret
+}
+func (t *PatchTable) alter() []string { return nil }
 func (t *PatchTable) drop() []string {
 	if PatchDropDisable {
 		return nil
@@ -45,8 +84,21 @@ func (c *PatchColumn) GenerateSQL() []string {
 	}
 	return c.drop()
 }
-func (c *PatchColumn) create() []string { return nil }
-func (c *PatchColumn) alter() []string  { return nil }
+func (c *PatchColumn) create() []string {
+	sb := &strings.Builder{}
+	fmt.Fprint(sb, c.to.Name, " ", c.to.Type)
+	if !c.to.Nullable {
+		fmt.Fprint(sb, " NOT NULL")
+	}
+	if c.to.Default.Valid {
+		fmt.Fprint(sb, " DEFAULT ", c.to.Default.String)
+	}
+	if c.to.PrimaryKey {
+		fmt.Fprint(sb, " PRIMARY KEY")
+	}
+	return []string{sb.String()}
+}
+func (c *PatchColumn) alter() []string { return nil }
 func (c *PatchColumn) drop() []string {
 	if PatchDropDisable {
 		return nil
@@ -69,8 +121,40 @@ func (i *PatchIndex) GenerateSQL() []string {
 	}
 	return i.drop()
 }
-func (i *PatchIndex) create() []string { return nil }
-func (i *PatchIndex) alter() []string  { return nil }
+func (i *PatchIndex) create() []string {
+	sb := &strings.Builder{}
+	fmt.Fprint(sb, "CREATE")
+	if i.to.IsUnique {
+		fmt.Fprint(sb, " UNIQUE")
+	}
+	fmt.Fprint(sb, " INDEX")
+	if i.to.Concurrently {
+		fmt.Fprint(sb, " CONCURRENTLY")
+	}
+	fmt.Fprintf(sb, " %s ON %s",
+		i.to.Name, *i.to.Table)
+	if len(i.to.MethodName) > 0 {
+		fmt.Fprint(sb, " USING ", i.to.MethodName)
+	}
+	sb.WriteByte('(')
+	if len(i.to.ColDef) > 0 {
+		sb.WriteString(i.to.ColDef)
+	} else {
+		fmt.Fprint(sb, strings.Join(i.to.Columns, ", "))
+	}
+	sb.WriteByte(')')
+	if len(i.to.With) > 0 {
+		fmt.Fprint(sb, " WITH ", i.to.With)
+	}
+	if len(i.to.Tablespace) > 0 {
+		fmt.Fprint(sb, " TABLESPACE ", i.to.Tablespace)
+	}
+	if len(i.to.Where) > 0 {
+		fmt.Fprint(sb, " WHERE ", i.to.Where)
+	}
+	return []string{sb.String()}
+}
+func (i *PatchIndex) alter() []string { return nil }
 func (i *PatchIndex) drop() []string {
 	// always drop unused indexes
 	return []string{
@@ -92,8 +176,29 @@ func (c *PatchConstraint) GenerateSQL() []string {
 	}
 	return c.drop()
 }
-func (c *PatchConstraint) create() []string { return nil }
-func (c *PatchConstraint) alter() []string  { return nil }
+func (c *PatchConstraint) create() []string {
+	sb := &strings.Builder{}
+	fmt.Fprint(sb, "CONSTRAINT ", c.to.Name)
+	if len(c.to.Check) > 0 {
+		fmt.Fprint(sb, " CHECK (", c.to.Check, ")")
+	}
+	switch c.to.Type {
+	case TypeFK:
+		if c.to.ReferenceTable == nil {
+			fmt.Fprint(sb, " FOREIGN KEY (", strings.Join(c.to.Columns, ", "), ")")
+			fmt.Fprintf(sb, " REFERENCES %s (%s)", *c.to.ReferenceTable, strings.Join(c.to.ReferenceColumns, ", "))
+			if len(c.to.OnDelete) > 0 {
+				fmt.Fprint(sb, " ON DELETE ", c.to.OnDelete)
+			}
+		}
+	case TypePK:
+		fmt.Fprint(sb, " PRIMARY KEY (", strings.Join(c.to.Columns, ", "), ")")
+	case TypeUQ:
+		fmt.Fprint(sb, " UNIQUE (", strings.Join(c.to.Columns, ", "), ")")
+	}
+	return []string{sb.String()}
+}
+func (c *PatchConstraint) alter() []string { return nil }
 func (c *PatchConstraint) drop() []string {
 	// always drop unused constraints
 	return []string{
