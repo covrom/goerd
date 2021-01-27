@@ -23,6 +23,7 @@ func (t *PatchTable) GenerateSQL() []string {
 	}
 	return t.drop()
 }
+
 func (t *PatchTable) create() []string {
 	if t.to.Type != "TABLE" {
 		return []string{
@@ -84,6 +85,7 @@ func (c *PatchColumn) GenerateSQL() []string {
 	}
 	return c.drop()
 }
+
 func (c *PatchColumn) create() []string {
 	sb := &strings.Builder{}
 	fmt.Fprint(sb, c.to.Name, " ", c.to.Type)
@@ -121,6 +123,7 @@ func (i *PatchIndex) GenerateSQL() []string {
 	}
 	return i.drop()
 }
+
 func (i *PatchIndex) create() []string {
 	sb := &strings.Builder{}
 	fmt.Fprint(sb, "CREATE")
@@ -176,6 +179,7 @@ func (c *PatchConstraint) GenerateSQL() []string {
 	}
 	return c.drop()
 }
+
 func (c *PatchConstraint) create() []string {
 	sb := &strings.Builder{}
 	fmt.Fprint(sb, "CONSTRAINT ", c.to.Name)
@@ -219,8 +223,27 @@ func (r *PatchRelation) GenerateSQL() []string {
 	}
 	return r.drop()
 }
-func (r *PatchRelation) create() []string { return nil }
-func (r *PatchRelation) alter() []string  { return nil }
+
+func (r *PatchRelation) create() []string {
+	sb := &strings.Builder{}
+	fmt.Fprintf(sb, "ALTER TABLE %s ADD FOREIGN KEY (", r.to.Table.Name)
+	for i, c := range r.to.Columns {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(c.Name)
+	}
+	fmt.Fprintf(sb, ") REFERENCES %s (", r.to.ParentTable.Name)
+	for i, c := range r.to.ParentColumns {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(c.Name)
+	}
+	sb.WriteByte(')')
+	return []string{sb.String()}
+}
+func (r *PatchRelation) alter() []string { return nil }
 func (r *PatchRelation) drop() []string {
 	// TODO:
 	// declare r record;
