@@ -100,7 +100,44 @@ func (c *PatchColumn) create() []string {
 	}
 	return []string{sb.String()}
 }
-func (c *PatchColumn) alter() []string { return nil }
+
+func (c *PatchColumn) alter() []string {
+	ret := []string{}
+	if c.from.Default.String != c.to.Default.String && (c.from.Default.Valid || c.to.Default.Valid) {
+		if c.to.Default.Valid {
+			ret = append(ret, fmt.Sprintf(
+				"ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s",
+				c.tableName, c.to.Name, c.to.Default.String,
+			))
+		} else {
+			ret = append(ret, fmt.Sprintf(
+				"ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT",
+				c.tableName, c.to.Name,
+			))
+		}
+	}
+	if c.from.Nullable != c.to.Nullable {
+		if c.to.Nullable {
+			ret = append(ret, fmt.Sprintf(
+				"ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL",
+				c.tableName, c.to.Name,
+			))
+		} else {
+			ret = append(ret, fmt.Sprintf(
+				"ALTER TABLE %s ALTER COLUMN %s SET NOT NULL",
+				c.tableName, c.to.Name,
+			))
+		}
+	}
+	if c.from.Type != c.to.Type {
+		ret = append(ret, fmt.Sprintf(
+			"ALTER TABLE %s ALTER COLUMN %s TYPE %s",
+			c.tableName, c.to.Name, c.to.Type,
+		))
+	}
+	return ret
+}
+
 func (c *PatchColumn) drop() []string {
 	if PatchDropDisable {
 		return nil
