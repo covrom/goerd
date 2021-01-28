@@ -61,7 +61,22 @@ func (t *PatchTable) create() []string {
 
 	return ret
 }
-func (t *PatchTable) alter() []string { return nil }
+
+func (t *PatchTable) alter() []string {
+	ret := []string{}
+	for _, c := range t.columns {
+		if c.from == nil {
+			ret = append(ret, c.create()...)
+		} else if c.to == nil {
+			ret = append(ret, c.drop()...)
+		} else {
+			ret = append(ret, c.alter()...)
+		}
+	}
+	// TODO: others
+	return ret
+}
+
 func (t *PatchTable) drop() []string {
 	if PatchDropDisable {
 		return nil
@@ -239,7 +254,11 @@ func (c *PatchConstraint) create() []string {
 	}
 	return []string{sb.String()}
 }
-func (c *PatchConstraint) alter() []string { return nil }
+
+func (c *PatchConstraint) alter() []string {
+	return nil
+}
+
 func (c *PatchConstraint) drop() []string {
 	// always drop unused constraints
 	return []string{
