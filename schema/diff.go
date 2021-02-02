@@ -25,6 +25,9 @@ func (t *PatchTable) GenerateSQL() []string {
 }
 
 func (t *PatchTable) create() []string {
+	if t.to.Type == "" {
+		t.to.Type = "TABLE"
+	}
 	if t.to.Type != "TABLE" {
 		return []string{
 			fmt.Sprintf("CREATE %s %s AS (\n%s\n)", t.to.Type, t.to.Name, strings.TrimRight(t.to.Def, ";")),
