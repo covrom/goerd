@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -10,16 +11,19 @@ import (
 )
 
 var (
-	dsn   = flag.String("dsn", "", "Build a DSN e.g. postgres://username:password@url:port/dbName")
-	inyml = flag.String("iy", "", "input yaml filename")
-	yml   = flag.String("oy", "schema.yaml", "output yaml filename")
-	pml   = flag.String("op", "schema.puml", "output plant uml filename")
-	dist  = flag.Int("opdist", 2, "distance for plant uml")
+	dsn     = flag.String("dsn", "", "Build a DSN e.g. postgres://username:password@url:port/dbName")
+	inyml   = flag.String("iy", "", "input yaml filename")
+	yml     = flag.String("oy", "schema.yaml", "output yaml filename")
+	pml     = flag.String("op", "schema.puml", "output plant uml filename")
+	dist    = flag.Int("opdist", 2, "distance for plant uml")
+	fromyml = flag.String("from", "", "source schema yaml filename")
+	toyml   = flag.String("to", "", "destination schema yaml filename")
 )
 
 func main() {
 	flag.Parse()
-	if (*dsn == "" && *inyml == "") || (*yml == "" && *pml == "") {
+	if (*dsn == "" && *inyml == "" && *fromyml == "" && *toyml == "") ||
+		(*yml == "" && *pml == "" && *fromyml == "" && *toyml == "") {
 		flag.Usage()
 		return
 	}
@@ -68,5 +72,39 @@ func main() {
 			log.Fatal(err)
 		}
 		wr.Close()
+	}
+
+	if *fromyml != "" || *toyml != "" {
+		sfrom := &schema.Schema{}
+		if *fromyml != "" {
+			ffrom, err := os.Open(*fromyml)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := sfrom.LoadYaml(ffrom); err != nil {
+				ffrom.Close()
+				log.Fatal(err)
+			}
+			ffrom.Close()
+		}
+		sto := &schema.Schema{}
+		if *toyml != "" {
+			fto, err := os.Open(*toyml)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := sto.LoadYaml(fto); err != nil {
+				fto.Close()
+				log.Fatal(err)
+			}
+			fto.Close()
+		}
+
+		ptch := &schema.PatchSchema{CurrentSchema: sfrom.CurrentSchema}
+		ptch.Build(sfrom, sto)
+		qs := ptch.GenerateSQL()
+		for _, q := range qs {
+			fmt.Println(q)
+		}
 	}
 }
