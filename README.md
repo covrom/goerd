@@ -6,12 +6,12 @@ This tool allows you to turn schemas into instructions for the database, includi
 
 Features (in progress):
 
-- Generating posgresql migrations as a set of SQL queries that apply changes between two schemas, a schema and a database, or two databases using a yaml schema definition. For yaml schema definition see https://github.com/k1LoW/tbls
-- Using diff algorithm https://github.com/covrom/diff
+- Generating posgresql migrations as a set of SQL queries that apply changes between two schemas, a schema and a database, or two databases using a yaml schema definition
 - Using https://github.com/jackc/pgx
 - Run as grpc-microservice
 - Use as library
 - [Check rules for schema](https://wiki.postgresql.org/wiki/Don't_Do_This)
+- [Generate CRUDs like postgrest](https://github.com/PostgREST/postgrest)
 
 Example of generated plantuml:
 
