@@ -21,3 +21,4 @@ sql/test_ddl_full.sql
 schema/yaml_test.go
 schema2.puml
 schema2.yaml
+.vscode/launch.json

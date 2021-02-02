@@ -364,6 +364,19 @@ func (s *PatchSchema) Build(from, to *Schema) {
 			}
 			pt.columns = append(pt.columns, pc)
 		}
+		if rt != nil {
+			for _, c := range rt.Columns {
+				pc := &PatchColumn{
+					tableName: t.Name,
+					to:        c,
+				}
+				tc, err := t.FindColumnByName(c.Name)
+				if err == nil {
+					pc.from = tc
+				}
+				pt.columns = append(pt.columns, pc)
+			}
+		}
 		for _, idx := range t.Indexes {
 			pi := &PatchIndex{
 				from: idx,
