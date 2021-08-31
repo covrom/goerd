@@ -8,12 +8,13 @@ services:
     command: goerd -oy /tmp/schema.yaml -dsn "postgres://postgres:goerd@db:5432/test?sslmode=disable"
     volumes:
       - ./output:/tmp
-
-
+    depends_on:
+      - db
   db:
-    image: postgres:12.5-alpine
+    image: postgres:12-alpine
     restart: unless-stopped
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
     environment:
       POSTGRES_PASSWORD: goerd
+      POSTGRES_DB: test

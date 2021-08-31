@@ -8,7 +8,6 @@ import (
 
 	"github.com/covrom/goerd/drivers/postgres/idxscan"
 	"github.com/covrom/goerd/schema"
-	"github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
@@ -73,7 +72,7 @@ func (p *Postgres) Analyze(s *schema.Schema) error {
 	tables := []*schema.Table{}
 	for tableRows.Next() {
 		var (
-			tableOid     uint64
+			tableOid     uint32
 			tableName    string
 			tableType    string
 			tableSchema  string
@@ -130,11 +129,15 @@ func (p *Postgres) Analyze(s *schema.Schema) error {
 				constraintDef                  string
 				constraintType                 string
 				constraintReferenceTable       sql.NullString
-				constraintColumnNames          []sql.NullString
-				constraintReferenceColumnNames []sql.NullString
+				constraintColumnNames          NullStringArray
+				constraintReferenceColumnNames NullStringArray
 				constraintComment              sql.NullString
 			)
-			err = constraintRows.Scan(&constraintName, &constraintDef, &constraintType, &constraintReferenceTable, pq.Array(&constraintColumnNames), pq.Array(&constraintReferenceColumnNames), &constraintComment)
+			err = constraintRows.Scan(&constraintName, &constraintDef, &constraintType,
+				&constraintReferenceTable,
+				&constraintColumnNames,
+				&constraintReferenceColumnNames,
+				&constraintComment)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -235,13 +238,14 @@ func (p *Postgres) Analyze(s *schema.Schema) error {
 				indisunique      bool
 				indisclustered   bool
 				amname           string
-				indexColumnNames []sql.NullString
+				indexColumnNames NullStringArray
 				indexComment     sql.NullString
 			)
 			err = indexRows.Scan(&indexName, &indisprimary,
 				&indisunique, &indisclustered,
 				&amname, &indexDef,
-				pq.Array(&indexColumnNames), &indexComment)
+				&indexColumnNames,
+				&indexComment)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -339,7 +343,7 @@ func (p *Postgres) Analyze(s *schema.Schema) error {
 }
 
 // arrayRemoveNull
-func arrayRemoveNull(in []sql.NullString) []string {
+func arrayRemoveNull(in []NullString) []string {
 	out := []string{}
 	for _, i := range in {
 		if i.Valid {

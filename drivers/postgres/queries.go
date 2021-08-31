@@ -28,8 +28,8 @@ SELECT
   END AS def,
   cons.contype AS type,
   fcls.relname,
-  ARRAY_AGG(attr.attname),
-  ARRAY_AGG(fattr.attname),
+  array_to_json(ARRAY_AGG(attr.attname)) as attnm,
+  array_to_json(ARRAY_AGG(fattr.attname)) as fattnm,
   descr.description AS comment
 FROM pg_constraint AS cons
 LEFT JOIN pg_trigger AS trig ON trig.tgconstraint = cons.oid AND NOT trig.tgisinternal
@@ -76,7 +76,7 @@ SELECT
   idx.indisclustered,
   am.amname,
   pg_get_indexdef(idx.indexrelid) AS indexdef,
-  ARRAY_AGG(attr.attname),
+  array_to_json(ARRAY_AGG(attr.attname)) as attnm,
   descr.description AS comment
 FROM pg_index AS idx
 INNER JOIN pg_class AS cls ON idx.indexrelid = cls.oid
