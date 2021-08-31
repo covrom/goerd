@@ -371,10 +371,21 @@ func (s *PatchSchema) Build(from, to *Schema) {
 					to:        c,
 				}
 				tc, err := t.FindColumnByName(c.Name)
+				fnd := false
 				if err == nil {
 					pc.from = tc
+
+					for _, v := range pt.columns {
+						if v.from == pc.from &&
+							v.to == pc.to {
+							fnd = true
+							break
+						}
+					}
 				}
-				pt.columns = append(pt.columns, pc)
+				if !fnd {
+					pt.columns = append(pt.columns, pc)
+				}
 			}
 		}
 		for _, idx := range t.Indexes {
