@@ -17,8 +17,9 @@ This tool allows you to turn schemas into instructions for the database, includi
 
 ### Features
 
+- Generate `yaml` short schema description from database
+- Generate [plantuml](https://plantuml.com) view of schema
 - Create posgresql migrations as a set of SQL queries that apply changes between two schemas, a schema and a database, or two databases using a schema definition that is stored in a yaml or plantuml file.
-- Using https://github.com/jackc/pgx
 
 Example of generated plantuml:
 
