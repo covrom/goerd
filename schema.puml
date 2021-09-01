@@ -1,0 +1,15 @@
+@startuml
+hide methods
+hide stereotypes
+
+skinparam class {
+	BackgroundColor White
+	BorderColor #6E6E6E
+	ArrowColor #6E6E6E
+}
+
+' tables
+
+' relations
+
+@enduml

@@ -1,0 +1,978 @@
+name: ""
+schema: ""
+tables:
+  candidate:
+    type: TABLE
+    columns:
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      employment_date:
+        type: timestamptz
+        nullable: true
+      esia:
+        type: jsonb
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      lna_approved_at:
+        type: timestamptz
+        nullable: true
+      offer_approved_at:
+        type: timestamptz
+        nullable: true
+      offer_seen_at:
+        type: timestamptz
+        nullable: true
+      personal_info:
+        type: jsonb
+        nullable: true
+      position_id:
+        type: uuid
+      recruiter_info:
+        type: jsonb
+        nullable: true
+      supervisor_id:
+        type: uuid
+        nullable: true
+      td_approved_at:
+        type: timestamptz
+        nullable: true
+      td_seen_at:
+        type: timestamptz
+        nullable: true
+      unique_link:
+        type: uuid
+      updated_at:
+        type: timestamptz
+        nullable: true
+    indexes:
+      idx_created_at:
+        method: btree
+        columns: [created_at]
+      uk_candidate_recruiter_info_email:
+        isUnique: true
+        method: btree
+        columns: [expr]
+        coldef: (((recruiter_info ->> 'email'::text)))
+      uk_candidate_recruiter_info_phone:
+        isUnique: true
+        method: btree
+        columns: [expr]
+        coldef: (((recruiter_info ->> 'phone'::text)))
+    constraints:
+      candidate_unique_link_key:
+        type: UNIQUE
+        columns: [unique_link]
+    relations:
+      users:
+        columns: [supervisor_id]
+        parentColumns: [id]
+        onDelete: RESTRICT
+  candidate_document:
+    type: TABLE
+    columns:
+      candidate_id:
+        type: uuid
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      doc_data:
+        type: jsonb
+        nullable: true
+      doc_subtype:
+        type: uuid
+      doc_type:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+      status:
+        type: varchar(50)
+      updated_at:
+        type: timestamptz
+        nullable: true
+    relations:
+      candidate:
+        columns: [candidate_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  candidate_dss_cert:
+    type: TABLE
+    columns:
+      candidate_id:
+        type: uuid
+        nullable: true
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      dss_certificate:
+        type: varchar
+        nullable: true
+      dss_certificate_id:
+        type: bigint
+        nullable: true
+      dss_status:
+        type: varchar
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      resp_code:
+        type: bigint
+        nullable: true
+      resp_description:
+        type: varchar
+        nullable: true
+      resp_type:
+        type: varchar
+        nullable: true
+      updated_at:
+        type: timestamptz
+        nullable: true
+    indexes:
+      idx_candidate_dss_cert_dss_certificate_id:
+        method: btree
+        columns: [dss_certificate_id]
+    relations:
+      candidate:
+        columns: [candidate_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  candidate_dss_document:
+    type: TABLE
+    columns:
+      candidate_id:
+        type: uuid
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      dss_document_id:
+        type: bigint
+      file_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+      resp_code:
+        type: bigint
+        nullable: true
+      resp_description:
+        type: varchar
+        nullable: true
+      resp_type:
+        type: varchar
+        nullable: true
+      updated_at:
+        type: timestamptz
+        nullable: true
+    indexes:
+      idx_candidate_dss_document_dss_document_id:
+        method: btree
+        columns: [dss_document_id]
+    relations:
+      candidate:
+        columns: [candidate_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+      file:
+        columns: [file_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  candidate_dss_sign:
+    type: TABLE
+    columns:
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      dss_document_id:
+        type: bigint
+      dss_document_sign_status:
+        type: varchar
+      dss_sign_status:
+        type: varchar
+      dss_signature:
+        type: varchar
+        nullable: true
+      dss_signature_id:
+        type: bigint
+      id:
+        type: uuid
+        pk: true
+      resp_code:
+        type: bigint
+        nullable: true
+      resp_description:
+        type: varchar
+        nullable: true
+      resp_type:
+        type: varchar
+        nullable: true
+      updated_at:
+        type: timestamptz
+        nullable: true
+    indexes:
+      idx_candidate_dss_sign_dss_document_id:
+        method: btree
+        columns: [dss_document_id]
+      idx_candidate_dss_sign_dss_signature_id:
+        method: btree
+        columns: [dss_signature_id]
+  candidate_dss_user:
+    type: TABLE
+    columns:
+      candidate_id:
+        type: uuid
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      dss_password:
+        type: varchar
+        nullable: true
+      dss_user_id:
+        type: bigint
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      resp_code:
+        type: bigint
+        nullable: true
+      resp_description:
+        type: varchar
+        nullable: true
+      resp_type:
+        type: varchar
+        nullable: true
+      updated_at:
+        type: timestamptz
+        nullable: true
+    indexes:
+      idx_candidate_dss_user_dss_user_id:
+        method: btree
+        columns: [dss_user_id]
+    relations:
+      candidate:
+        columns: [candidate_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  candidate_status_history:
+    type: TABLE
+    columns:
+      candidate_id:
+        type: uuid
+      comment:
+        type: text
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      id:
+        type: uuid
+        pk: true
+      status:
+        type: varchar(50)
+        nullable: true
+    constraints:
+      candidate_status_history_candidate_id_status_key:
+        type: UNIQUE
+        columns: [candidate_id, status]
+    relations:
+      candidate:
+        columns: [candidate_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  cities_mts:
+    type: TABLE
+    columns:
+      id:
+        type: uuid
+        pk: true
+      name:
+        type: varchar
+    constraints:
+      cities_mts_name_key:
+        type: UNIQUE
+        columns: [name]
+  course:
+    type: TABLE
+    columns:
+      company_ids:
+        type: jsonb
+        default: "'[]'::jsonb"
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      file_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+      link:
+        type: varchar
+      title:
+        type: varchar
+    relations:
+      file:
+        columns: [file_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  course_pass:
+    type: TABLE
+    columns:
+      candidate_id:
+        type: uuid
+      course_id:
+        type: uuid
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      id:
+        type: uuid
+        pk: true
+      source_system:
+        type: varchar
+    constraints:
+      course_pass_candidate_id_course_id_key:
+        type: UNIQUE
+        columns: [candidate_id, course_id]
+    relations:
+      candidate:
+        columns: [candidate_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+      course:
+        columns: [course_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  custom_file:
+    type: TABLE
+    columns:
+      data:
+        type: jsonb
+        nullable: true
+      entity_id:
+        type: uuid
+      file_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+    indexes:
+      cf_entity_id:
+        method: btree
+        columns: [entity_id]
+    relations:
+      file:
+        columns: [file_id]
+        parentColumns: [id]
+  custom_file_approve:
+    type: TABLE
+    columns:
+      approve:
+        type: boolean
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      custom_file_id:
+        type: uuid
+      entity_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+    indexes:
+      cfa_entity_id:
+        method: btree
+        columns: [entity_id]
+    constraints:
+      custom_file_approve_custom_file_id_entity_id_key:
+        type: UNIQUE
+        columns: [custom_file_id, entity_id]
+    relations:
+      custom_file:
+        columns: [custom_file_id]
+        parentColumns: [id]
+        onDelete: RESTRICT
+  dictionaries:
+    type: TABLE
+    columns:
+      data:
+        type: jsonb
+        nullable: true
+      dictionary_name:
+        type: varchar(50)
+      id:
+        type: uuid
+        pk: true
+      parent_id:
+        type: uuid
+        nullable: true
+      value:
+        type: varchar(50)
+    constraints:
+      dictionaries_dictionary_name_value_key:
+        type: UNIQUE
+        columns: [dictionary_name, value]
+  document_template:
+    type: TABLE
+    columns:
+      doc_subtype:
+        type: uuid
+        pk: true
+      doc_type:
+        type: uuid
+        pk: true
+      status:
+        type: varchar
+        nullable: true
+      template_name:
+        type: varchar
+        pk: true
+      template_type:
+        type: integer
+        pk: true
+    relations:
+      template:
+        columns: [template_type, template_name]
+        parentColumns: [template_type, template_name]
+  employee_document:
+    type: TABLE
+    columns:
+      action:
+        type: varchar
+      approved_at:
+        type: timestamptz
+        nullable: true
+      assignee_id:
+        type: uuid
+        nullable: true
+      attachments:
+        type: jsonb
+        default: "'[]'::jsonb"
+      blocker_id:
+        type: uuid
+        nullable: true
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      deadline_at:
+        type: timestamptz
+        nullable: true
+      doc_data:
+        type: jsonb
+        nullable: true
+      doc_subtype:
+        type: uuid
+      doc_type:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+      reference_id:
+        type: uuid
+        nullable: true
+      status:
+        type: varchar(50)
+      updated_at:
+        type: timestamptz
+        nullable: true
+      user_id:
+        type: uuid
+      visited_at:
+        type: timestamptz
+        nullable: true
+    indexes:
+      uniq_employee_document:
+        isUnique: true
+        method: btree
+        columns: [doc_subtype, doc_type, user_id]
+        coldef: (user_id, doc_subtype, doc_type)
+    relations:
+      employee_document:
+        columns: [reference_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+      users:
+        columns: [assignee_id]
+        parentColumns: [id]
+        onDelete: RESTRICT
+  employee_document_category:
+    type: TABLE
+    columns:
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      id:
+        type: uuid
+        pk: true
+      name:
+        type: varchar
+    constraints:
+      employee_document_category_name_key:
+        type: UNIQUE
+        columns: [name]
+  employee_document_type:
+    type: TABLE
+    columns:
+      action:
+        type: varchar
+      category_id:
+        type: uuid
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      expiration_at:
+        type: timestamptz
+        nullable: true
+      file_id:
+        type: uuid
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      name:
+        type: varchar
+    relations:
+      employee_document_category:
+        columns: [category_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+      file:
+        columns: [file_id]
+        parentColumns: [id]
+        onDelete: SET NULL
+  file:
+    type: TABLE
+    columns:
+      category:
+        type: varchar(30)
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      created_by:
+        type: uuid
+      document_type:
+        type: varchar(30)
+      dss_hash_b64:
+        type: varchar
+        nullable: true
+      file_id:
+        type: varchar
+      id:
+        type: uuid
+        pk: true
+      mime:
+        type: varchar
+      original_name:
+        type: varchar(255)
+    indexes:
+      idx_category:
+        method: btree
+        columns: [category]
+      idx_file_id:
+        method: btree
+        columns: [file_id]
+    constraints:
+      file_category_file_id_key:
+        type: UNIQUE
+        columns: [category, file_id]
+  file_sign:
+    type: TABLE
+    columns:
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      file_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+      sign:
+        type: varchar
+      signer_id:
+        type: uuid
+      updated_at:
+        type: timestamptz
+        nullable: true
+    relations:
+      file:
+        columns: [file_id]
+        parentColumns: [id]
+        onDelete: RESTRICT
+      users:
+        columns: [signer_id]
+        parentColumns: [id]
+        onDelete: RESTRICT
+  firm:
+    type: TABLE
+    columns:
+      id:
+        type: uuid
+        pk: true
+      name:
+        type: varchar
+  forms:
+    type: TABLE
+    columns:
+      description:
+        type: varchar
+        default: "''::character varying"
+      doc_subtype:
+        type: uuid
+        pk: true
+      doc_type:
+        type: uuid
+        pk: true
+      fields:
+        type: jsonb
+        nullable: true
+      title:
+        type: varchar
+        default: "''::character varying"
+    relations:
+      dictionaries:
+        columns: [doc_type]
+        parentColumns: [id]
+        onDelete: CASCADE
+  generated_file:
+    type: TABLE
+    columns:
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      entity_id:
+        type: uuid
+      file_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+      template_name:
+        type: varchar
+      template_type:
+        type: integer
+    constraints:
+      generated_document_template_type_template_name_entity_id_key:
+        type: UNIQUE
+        columns: [template_type, template_name, entity_id]
+    relations:
+      file:
+        columns: [file_id]
+        parentColumns: [id]
+  goose_db_version:
+    type: TABLE
+    columns:
+      id:
+        type: integer
+        pk: true
+        default: nextval('goose_db_version_id_seq'::regclass)
+      is_applied:
+        type: boolean
+      tstamp:
+        type: timestamp without time zone
+        nullable: true
+        default: now()
+      version_id:
+        type: bigint
+  hr_schedule:
+    type: TABLE
+    columns:
+      id:
+        type: uuid
+        pk: true
+      region:
+        type: varchar
+        nullable: true
+      reserved:
+        type: integer
+        nullable: true
+        default: "0"
+      slots:
+        type: integer
+        nullable: true
+      time:
+        type: timestamptz
+        nullable: true
+    constraints:
+      hr_schedule_time_region_key:
+        type: UNIQUE
+        columns: [region, time]
+  mobile_course:
+    type: TABLE
+    columns:
+      candidate_id:
+        type: uuid
+        pk: true
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      mobile_course_id:
+        type: varchar
+        pk: true
+    relations:
+      candidate:
+        columns: [candidate_id]
+        parentColumns: [id]
+        onDelete: CASCADE
+  notify_email:
+    type: TABLE
+    columns:
+      additional_info:
+        type: jsonb
+        nullable: true
+      created_at:
+        type: timestamptz
+      error:
+        type: varchar
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      payload:
+        type: jsonb
+      to_addr:
+        type: varchar
+      tpl:
+        type: varchar
+    indexes:
+      idx_to_addr:
+        method: btree
+        columns: [to_addr]
+  oebs_hr_xxhr_kategoriya_godnosti_k_voen_slujbe:
+    type: TABLE
+    columns:
+      description:
+        type: varchar(150)
+      id:
+        type: uuid
+        pk: true
+      value:
+        type: varchar(150)
+  oebs_hr_xxhr_sostav_officer:
+    type: TABLE
+    columns:
+      description:
+        type: varchar(150)
+      id:
+        type: uuid
+        pk: true
+      value:
+        type: varchar(150)
+  oebs_hr_xxhr_sostav_soldier:
+    type: TABLE
+    columns:
+      description:
+        type: varchar(150)
+      id:
+        type: uuid
+        pk: true
+      value:
+        type: varchar(150)
+  oebs_hr_xxhr_voinskoe_zvanije_officer:
+    type: TABLE
+    columns:
+      description:
+        type: varchar(150)
+      id:
+        type: uuid
+        pk: true
+      value:
+        type: varchar(150)
+  oebs_hr_xxhr_voinskoe_zvanije_soldier:
+    type: TABLE
+    columns:
+      description:
+        type: varchar(150)
+      id:
+        type: uuid
+        pk: true
+      value:
+        type: varchar(150)
+  person:
+    type: TABLE
+    columns:
+      email:
+        type: varchar
+      employee_id:
+        type: varchar(50)
+      first_name:
+        type: varchar
+      id:
+        type: uuid
+        pk: true
+      last_name:
+        type: varchar
+      login:
+        type: varchar
+      main_assignment:
+        type: boolean
+      patronymic_name:
+        type: varchar
+        nullable: true
+      position:
+        type: varchar
+  person_firm:
+    type: TABLE
+    columns:
+      employee_id:
+        type: varchar(50)
+      firm_id:
+        type: uuid
+  person_info:
+    type: TABLE
+    columns:
+      division:
+        type: varchar
+        nullable: true
+      employee_id:
+        type: varchar(50)
+        nullable: true
+      first_name:
+        type: varchar
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      last_name:
+        type: varchar
+        nullable: true
+      patronymic_name:
+        type: varchar
+        nullable: true
+      position:
+        type: varchar
+        nullable: true
+      tab_num:
+        type: varchar
+        nullable: true
+    constraints:
+      person_info_employee_id_key:
+        type: UNIQUE
+        columns: [employee_id]
+  person_subdivision:
+    type: TABLE
+    columns:
+      employee_id:
+        type: varchar(50)
+      subdivision_id:
+        type: uuid
+  position:
+    type: TABLE
+    columns:
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      firm_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+      medical_check_required:
+        type: boolean
+        default: "true"
+      name:
+        type: varchar(255)
+      subdivision_id:
+        type: uuid
+      updated_at:
+        type: timestamptz
+        nullable: true
+    relations:
+      firm:
+        columns: [firm_id]
+        parentColumns: [id]
+        onDelete: RESTRICT
+      subdivision:
+        columns: [subdivision_id]
+        parentColumns: [id]
+        onDelete: RESTRICT
+  static_file:
+    type: TABLE
+    columns:
+      doc_subtype:
+        type: uuid
+      doc_type:
+        type: uuid
+      file_id:
+        type: uuid
+      id:
+        type: uuid
+        pk: true
+    constraints:
+      static_file_doc_type_doc_subtype_key:
+        type: UNIQUE
+        columns: [doc_type, doc_subtype]
+    relations:
+      file:
+        columns: [file_id]
+        parentColumns: [id]
+  subdivision:
+    type: TABLE
+    columns:
+      firm_id:
+        type: uuid
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      name:
+        type: varchar
+      parent_id:
+        type: uuid
+        nullable: true
+  template:
+    type: TABLE
+    columns:
+      data_collector:
+        type: varchar
+      file_ext:
+        type: varchar
+        nullable: true
+      template_name:
+        type: varchar
+        pk: true
+      template_type:
+        type: integer
+        pk: true
+  users:
+    type: TABLE
+    columns:
+      created_at:
+        type: timestamptz
+        default: CURRENT_TIMESTAMP
+      email:
+        type: varchar
+        nullable: true
+      employee_id:
+        type: varchar(50)
+        nullable: true
+      id:
+        type: uuid
+        pk: true
+      login:
+        type: varchar
+      name:
+        type: varchar
+        nullable: true
+      role:
+        type: varchar(50)
+        default: "''::character varying"
+      updated_at:
+        type: timestamptz
+        nullable: true
+    constraints:
+      users_employee_id_check:
+        type: CHECK
+        check: (char_length((employee_id)::text) > 0)
+        columns: [employee_id]
+      users_employee_id_key:
+        type: UNIQUE
+        columns: [employee_id]
+      users_login_check:
+        type: CHECK
+        check: (char_length((login)::text) > 0)
+        columns: [login]
+      users_login_key:
+        type: UNIQUE
+        columns: [login]
