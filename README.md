@@ -36,25 +36,35 @@ Example of generated plantuml:
 ### Usage
 
 Save database schema to yaml schema or PlantUML:
+
 `goerd -from "postgres://username:password@url:port/dbName" -to ./schema1.yaml`
+
 `goerd -from "postgres://username:password@url:port/dbName" -to ./schema1.puml`
 
 Print SQL queries migration between two schemas, dropping queries is commented out:
+
 `goerd -from schema1.yml -to schema2.yaml`
+
 `goerd -from schema1.yml -to "postgres://username:password@url:port/dbName"`
 
 With dropping queries:
+
 `goerd -drop -from schema1.yml -to schema2.yml`
+
 `goerd -drop -from schema1.yml -to "postgres://username:password@url:port/dbName"`
 
 Save PlantUML from schema:
+
 `goerd -from schema1.yml -to schema1.puml`
+
 `goerd -from "postgres://username:password@url:port/dbName" -to schema1.puml`
 
 Apply schema from yaml to database:
+
 `goerd -c apply -from schema1.yml -to "postgres://username:password@url:port/dbName"`
 
 Apply schema from DB1 to DB2:
+
 `goerd -c apply -from "postgres://username:password@url:port/DB1" -to "postgres://username:password@url:port/DB2"`
 
 
