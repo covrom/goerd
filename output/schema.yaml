@@ -1,0 +1,36 @@
+name: ""
+schema: public
+tables:
+  accounts:
+    type: TABLE
+    columns:
+      created_on:
+        type: timestamp without time zone
+      email:
+        type: varchar(255)
+      last_login:
+        type: timestamp without time zone
+        nullable: true
+      parent_id:
+        type: integer
+        nullable: true
+      password:
+        type: varchar(50)
+      user_id:
+        type: integer
+        pk: true
+        default: nextval('accounts_user_id_seq'::regclass)
+      username:
+        type: varchar(50)
+    constraints:
+      accounts_email_key:
+        type: UNIQUE
+        columns: [email]
+      accounts_username_key:
+        type: UNIQUE
+        columns: [username]
+    relations:
+      accounts:
+        columns: [parent_id]
+        parentColumns: [user_id]
+        onDelete: CASCADE

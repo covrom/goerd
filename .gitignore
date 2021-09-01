@@ -13,12 +13,10 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-schema.yaml
-goerd
-schema.puml
-schema copy.yaml
-sql/test_ddl_full.sql
-schema/yaml_test.go
-schema2.puml
-schema2.yaml
+
+/goerd
+/cmd/goerd/goerd
+/main
+/sql/test_ddl_full.sql
+/schema/yaml_test.go
 .vscode/launch.json
