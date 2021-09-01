@@ -21,9 +21,42 @@ This tool allows you to turn schemas into instructions for the database, includi
 - Generate [plantuml](https://plantuml.com) view of schema
 - Create posgresql migrations as a set of SQL queries that apply changes between two schemas, a schema and a database, or two databases using a schema definition that is stored in a yaml or plantuml file.
 
+Migration of the following objects is currently supported:
+- Tables
+- Columns
+- Indexes
+- Views
+
+This set covers 99% of PostgreSQL usecases in Golang services.
+
 Example of generated plantuml:
 
 ![Plantuml view](plantuml-example.png)
+
+### Usage
+
+Save database schema to yaml schema or PlantUML:
+`goerd -from "postgres://username:password@url:port/dbName" -to ./schema1.yaml`
+`goerd -from "postgres://username:password@url:port/dbName" -to ./schema1.puml`
+
+Print SQL queries migration between two schemas, dropping queries is commented out:
+`goerd -from schema1.yml -to schema2.yaml`
+`goerd -from schema1.yml -to "postgres://username:password@url:port/dbName"`
+
+With dropping queries:
+`goerd -drop -from schema1.yml -to schema2.yml`
+`goerd -drop -from schema1.yml -to "postgres://username:password@url:port/dbName"`
+
+Save PlantUML from schema:
+`goerd -from schema1.yml -to schema1.puml`
+`goerd -from "postgres://username:password@url:port/dbName" -to schema1.puml`
+
+Apply schema from yaml to database:
+`goerd -c apply -from schema1.yml -to "postgres://username:password@url:port/dbName"`
+
+Apply schema from DB1 to DB2:
+`goerd -c apply -from "postgres://username:password@url:port/DB1" -to "postgres://username:password@url:port/DB2"`
+
 
 ### API
 

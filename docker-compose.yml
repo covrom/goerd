@@ -5,7 +5,7 @@ services:
     image: goerd:develop
     build:
       context: ./
-    command: goerd -oy /tmp/schema.yaml -dsn "postgres://postgres:goerd@db:5432/test?sslmode=disable"
+    command: goerd -from "postgres://postgres:goerd@db:5432/test?sslmode=disable" -to /tmp/schema.yaml
     volumes:
       - ./output:/tmp
     depends_on:

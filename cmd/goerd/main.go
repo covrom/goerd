@@ -1,111 +1,273 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
-	"github.com/covrom/goerd/datasource"
-	"github.com/covrom/goerd/schema"
+	"github.com/covrom/goerd"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 var (
-	dsn     = flag.String("dsn", "", "Build a DSN e.g. postgres://username:password@url:port/dbName")
-	inyml   = flag.String("iy", "", "input yaml filename")
-	yml     = flag.String("oy", "schema.yaml", "output yaml filename")
-	pml     = flag.String("op", "schema.puml", "output plant uml filename")
-	dist    = flag.Int("opdist", 2, "distance for plant uml")
-	fromyml = flag.String("from", "", "source schema yaml filename")
-	toyml   = flag.String("to", "", "destination schema yaml filename")
+	from    = flag.String("from", "", "source schema filename *.yaml, or source PostgreSQL database DSN, e.g. postgres://username:password@url:port/dbName")
+	to      = flag.String("to", "", "target schema filename *.yaml or target PostgreSQL database DSN, or *.puml for save source to plantuml")
+	command = flag.String("c", "print", "command: 'print' - stdout print diff queries, 'apply' - apply diff queries to target database ('to')")
+	dist    = flag.Int("d", 2, "max relations distance for plant uml")
+	drop    = flag.Bool("drop", false, "drop tables or columns when applying migration")
 )
 
 func main() {
 	flag.Parse()
-	if (*dsn == "" && *inyml == "" && *fromyml == "" && *toyml == "") ||
-		(*yml == "" && *pml == "" && *fromyml == "" && *toyml == "") {
+	if *from == "" || *to == "" {
 		flag.Usage()
 		return
 	}
 
-	s := &schema.Schema{}
+	srcIsYaml := strings.HasSuffix(strings.ToLower(*from), ".yaml") || strings.HasSuffix(strings.ToLower(*from), ".yml")
+	srcIsPg := strings.HasPrefix(strings.ToLower(*from), "postgres://")
+	dstIsYaml := strings.HasSuffix(strings.ToLower(*to), ".yaml") || strings.HasSuffix(strings.ToLower(*to), ".yml")
+	dstIsPg := strings.HasPrefix(strings.ToLower(*to), "postgres://")
+	dstIsPuml := strings.HasSuffix(strings.ToLower(*to), ".puml")
+	cmdIsPrint := *command == "print"
+	cmdIsApply := *command == "apply"
 
-	if *dsn != "" {
-		var err error
-		s, err = datasource.Analyze(*dsn)
+	switch {
+	case srcIsYaml && dstIsYaml:
+		f, err := os.Open(*from)
 		if err != nil {
 			log.Fatal(err)
 		}
-	} else if *inyml != "" {
-		f, err := os.Open(*inyml)
+		src, err := goerd.SchemaFromYAML(f)
 		if err != nil {
-			log.Fatal(err)
-		}
-		if err := s.LoadYaml(f); err != nil {
 			f.Close()
 			log.Fatal(err)
 		}
 		f.Close()
-	}
 
-	if *yml != "" {
-		wr, err := os.OpenFile(*yml, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		f, err = os.Open(*to)
+		if err != nil {
+			log.Fatal(err)
+		}
+		dst, err := goerd.SchemaFromYAML(f)
+		if err != nil {
+			f.Close()
+			log.Fatal(err)
+		}
+		f.Close()
+
+		qs := goerd.GenerateMigrationSQL(src, dst)
+		if cmdIsPrint {
+			for _, q := range qs {
+				if !*drop {
+					if strings.HasPrefix(strings.ToUpper(q), "DROP") {
+						fmt.Println("--", q)
+						continue
+					}
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+						fmt.Println("--", q)
+						continue
+					}
+				}
+				fmt.Println(q)
+			}
+		} else if cmdIsApply {
+			log.Fatal("cant apply diffs between two yaml schemas, only print allowed")
+		} else {
+			log.Fatal("wrong command")
+		}
+
+	case srcIsYaml && dstIsPuml:
+		f, err := os.Open(*from)
+		if err != nil {
+			log.Fatal(err)
+		}
+		src, err := goerd.SchemaFromYAML(f)
+		if err != nil {
+			f.Close()
+			log.Fatal(err)
+		}
+		f.Close()
+
+		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := s.SaveYaml(wr); err != nil {
+		if err := goerd.SchemaToPlantUML(src, wr, *dist); err != nil {
 			wr.Close()
 			log.Fatal(err)
 		}
 		wr.Close()
-	}
 
-	if *pml != "" {
-		wr, err := os.OpenFile(*pml, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	case srcIsYaml && dstIsPg:
+		f, err := os.Open(*from)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// here from is destination schema, migrate to it
+		dst, err := goerd.SchemaFromYAML(f)
+		if err != nil {
+			f.Close()
+			log.Fatal(err)
+		}
+		f.Close()
+
+		src, err := goerd.SchemaFromPostgresWithConnect(*to)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := s.SavePlantUml(wr, *dist); err != nil {
+		qs := goerd.GenerateMigrationSQL(src, dst)
+		if cmdIsPrint {
+			for _, q := range qs {
+				if !*drop {
+					if strings.HasPrefix(strings.ToUpper(q), "DROP") {
+						fmt.Println("--", q)
+						continue
+					}
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+						fmt.Println("--", q)
+						continue
+					}
+				}
+				fmt.Println(q)
+			}
+		} else if cmdIsApply {
+			db, err := sql.Open("pgx", *to)
+			if err != nil {
+				log.Fatal(err)
+			}
+			tx, err := db.Begin()
+			if err != nil {
+				log.Fatal(err)
+			}
+			for _, q := range qs {
+				if !*drop {
+					if strings.HasPrefix(strings.ToUpper(q), "DROP") {
+						fmt.Println("--", q)
+						continue
+					}
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+						fmt.Println("--", q)
+						continue
+					}
+				}
+				fmt.Println(q)
+				_, err = tx.Exec(q)
+				if err != nil {
+					_ = tx.Rollback()
+					db.Close()
+					log.Fatal(err)
+				}
+			}
+			if err = tx.Commit(); err != nil {
+				db.Close()
+				log.Fatal(err)
+			}
+			db.Close()
+		} else {
+			log.Fatal("wrong command")
+		}
+	case srcIsPg && dstIsYaml:
+		src, err := goerd.SchemaFromPostgresWithConnect(*from)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := goerd.SchemaToYAML(src, wr); err != nil {
 			wr.Close()
 			log.Fatal(err)
 		}
 		wr.Close()
-	}
 
-	if *fromyml != "" || *toyml != "" {
-		sfrom := &schema.Schema{}
-		if *fromyml != "" {
-			ffrom, err := os.Open(*fromyml)
+	case srcIsPg && dstIsPuml:
+		src, err := goerd.SchemaFromPostgresWithConnect(*from)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := goerd.SchemaToPlantUML(src, wr, *dist); err != nil {
+			wr.Close()
+			log.Fatal(err)
+		}
+		wr.Close()
+
+	case srcIsPg && dstIsPg:
+		// here from is destination schema described by database, migrate to it
+		dst, err := goerd.SchemaFromPostgresWithConnect(*from)
+		if err != nil {
+			log.Fatal(err)
+		}
+		src, err := goerd.SchemaFromPostgresWithConnect(*to)
+		if err != nil {
+			log.Fatal(err)
+		}
+		qs := goerd.GenerateMigrationSQL(src, dst)
+		if cmdIsPrint {
+			for _, q := range qs {
+				if !*drop {
+					if strings.HasPrefix(strings.ToUpper(q), "DROP") {
+						fmt.Println("--", q)
+						continue
+					}
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+						fmt.Println("--", q)
+						continue
+					}
+				}
+				fmt.Println(q)
+			}
+		} else if cmdIsApply {
+			db, err := sql.Open("pgx", *to)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err := sfrom.LoadYaml(ffrom); err != nil {
-				ffrom.Close()
-				log.Fatal(err)
-			}
-			ffrom.Close()
-		}
-		sto := &schema.Schema{}
-		if *toyml != "" {
-			fto, err := os.Open(*toyml)
+			tx, err := db.Begin()
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err := sto.LoadYaml(fto); err != nil {
-				fto.Close()
+			for _, q := range qs {
+				if !*drop {
+					if strings.HasPrefix(strings.ToUpper(q), "DROP") {
+						fmt.Println("--", q)
+						continue
+					}
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+						fmt.Println("--", q)
+						continue
+					}
+				}
+				fmt.Println(q)
+				_, err = tx.Exec(q)
+				if err != nil {
+					_ = tx.Rollback()
+					db.Close()
+					log.Fatal(err)
+				}
+			}
+			if err = tx.Commit(); err != nil {
+				db.Close()
 				log.Fatal(err)
 			}
-			fto.Close()
+			db.Close()
+		} else {
+			log.Fatal("wrong command")
 		}
-
-		ptch := &schema.PatchSchema{CurrentSchema: sfrom.CurrentSchema}
-		ptch.Build(sfrom, sto)
-		qs := ptch.GenerateSQL()
-		for _, q := range qs {
-			fmt.Println(q)
-		}
+	default:
+		flag.Usage()
 	}
 }

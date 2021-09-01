@@ -4,9 +4,16 @@ import (
 	"database/sql"
 	"io"
 
+	"github.com/covrom/goerd/datasource"
 	"github.com/covrom/goerd/drivers/postgres"
 	"github.com/covrom/goerd/schema"
 )
+
+// SchemaFromPostgresDB reads database schema from postgres *sql.DB
+func SchemaFromPostgresWithConnect(dsn string) (*schema.Schema, error) {
+	s, err := datasource.Analyze(dsn)
+	return s, err
+}
 
 // SchemaFromPostgresDB reads database schema from postgres *sql.DB
 func SchemaFromPostgresDB(db *sql.DB) (*schema.Schema, error) {
@@ -36,4 +43,10 @@ func SchemaFromYAML(r io.Reader) (*schema.Schema, error) {
 		return nil, err
 	}
 	return s, nil
+}
+
+// SchemaToPlantUML saves the schema to a puml file,
+// distance - maximum path length for relationships between plantuml objects
+func SchemaToPlantUML(s *schema.Schema, w io.Writer, distance int) error {
+	return s.SavePlantUml(w, distance)
 }
