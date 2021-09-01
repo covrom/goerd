@@ -72,6 +72,7 @@ type Column struct {
 
 // Relation is the struct for table relation
 type Relation struct {
+	Name          string    `json:"name"`
 	Table         *Table    `json:"table"`
 	Columns       []*Column `json:"columns"`
 	ParentTable   *Table    `json:"parent_table" yaml:"parentTable"`

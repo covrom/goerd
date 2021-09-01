@@ -25,6 +25,7 @@ Migration of the following objects is currently supported:
 - Tables
 - Columns
 - Indexes
+- Constraints and Foreign Keys
 - Views
 
 This set covers 99% of PostgreSQL usecases in Golang services.

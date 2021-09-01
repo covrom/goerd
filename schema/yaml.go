@@ -23,6 +23,7 @@ type YamlTable struct {
 }
 
 type YamlRelation struct {
+	Name          string   `yaml:"name"`
 	Columns       []string `yaml:"columns,flow"`
 	ParentColumns []string `yaml:"parentColumns,flow"`
 	OnDelete      string   `yaml:"onDelete,omitempty"`
@@ -123,6 +124,7 @@ func (s *Schema) MarshalYAML() ([]byte, error) {
 				continue
 			}
 			yr := &YamlRelation{
+				Name:          r.Name,
 				OnDelete:      r.OnDelete,
 				Columns:       make([]string, len(r.Columns)),
 				ParentColumns: make([]string, len(r.ParentColumns)),
@@ -223,6 +225,7 @@ func (s *Schema) UnmarshalYAML(data []byte) error {
 				return err
 			}
 			r := &Relation{
+				Name:          yr.Name,
 				Table:         t,
 				ParentTable:   relt,
 				Columns:       make([]*Column, 0, len(yr.Columns)),

@@ -76,7 +76,24 @@ func (t *PatchTable) alter() []string {
 			ret = append(ret, c.alter()...)
 		}
 	}
-	// TODO: others
+	for _, idx := range t.indexes {
+		if idx.from == nil {
+			ret = append(ret, idx.create()...)
+		} else if idx.to == nil {
+			ret = append(ret, idx.drop()...)
+		} else {
+			ret = append(ret, idx.alter()...)
+		}
+	}
+	for _, ctr := range t.constraints {
+		if ctr.from == nil {
+			ret = append(ret, ctr.create()...)
+		} else if ctr.to == nil {
+			ret = append(ret, ctr.drop()...)
+		} else {
+			ret = append(ret, ctr.alter()...)
+		}
+	}
 	return ret
 }
 
@@ -92,6 +109,7 @@ func (t *PatchTable) drop() []string {
 type PatchColumn struct {
 	from, to  *Column
 	tableName string
+	newTable  bool
 }
 
 func (c *PatchColumn) GenerateSQL() []string {
@@ -106,6 +124,9 @@ func (c *PatchColumn) GenerateSQL() []string {
 
 func (c *PatchColumn) create() []string {
 	sb := &strings.Builder{}
+	if !c.newTable {
+		fmt.Fprintf(sb, "ALTER TABLE %s ADD COLUMN ", c.tableName)
+	}
 	fmt.Fprint(sb, c.to.Name, " ", c.to.Type)
 	if !c.to.Nullable {
 		fmt.Fprint(sb, " NOT NULL")
@@ -179,40 +200,49 @@ func (i *PatchIndex) GenerateSQL() []string {
 	return i.drop()
 }
 
-func (i *PatchIndex) create() []string {
+func createIndexDDL(idx *Index) string {
 	sb := &strings.Builder{}
 	fmt.Fprint(sb, "CREATE")
-	if i.to.IsUnique {
+	if idx.IsUnique {
 		fmt.Fprint(sb, " UNIQUE")
 	}
 	fmt.Fprint(sb, " INDEX")
-	if i.to.Concurrently {
+	if idx.Concurrently {
 		fmt.Fprint(sb, " CONCURRENTLY")
 	}
 	fmt.Fprintf(sb, " %s ON %s",
-		i.to.Name, *i.to.Table)
-	if len(i.to.MethodName) > 0 {
-		fmt.Fprint(sb, " USING ", i.to.MethodName)
+		idx.Name, *idx.Table)
+	if len(idx.MethodName) > 0 {
+		fmt.Fprint(sb, " USING ", idx.MethodName)
 	}
 	sb.WriteByte('(')
-	if len(i.to.ColDef) > 0 {
-		sb.WriteString(i.to.ColDef)
+	if len(idx.ColDef) > 0 {
+		sb.WriteString(idx.ColDef)
 	} else {
-		fmt.Fprint(sb, strings.Join(i.to.Columns, ", "))
+		fmt.Fprint(sb, strings.Join(idx.Columns, ", "))
 	}
 	sb.WriteByte(')')
-	if len(i.to.With) > 0 {
-		fmt.Fprint(sb, " WITH ", i.to.With)
+	if len(idx.With) > 0 {
+		fmt.Fprint(sb, " WITH ", idx.With)
 	}
-	if len(i.to.Tablespace) > 0 {
-		fmt.Fprint(sb, " TABLESPACE ", i.to.Tablespace)
+	if len(idx.Tablespace) > 0 {
+		fmt.Fprint(sb, " TABLESPACE ", idx.Tablespace)
 	}
-	if len(i.to.Where) > 0 {
-		fmt.Fprint(sb, " WHERE ", i.to.Where)
+	if len(idx.Where) > 0 {
+		fmt.Fprint(sb, " WHERE ", idx.Where)
 	}
-	return []string{sb.String()}
+	return sb.String()
 }
-func (i *PatchIndex) alter() []string { return nil }
+
+func (i *PatchIndex) create() []string {
+	return []string{createIndexDDL(i.to)}
+}
+func (i *PatchIndex) alter() []string {
+	if strings.EqualFold(createIndexDDL(i.from), createIndexDDL(i.to)) {
+		return nil
+	}
+	return append(i.drop(), i.create()...)
+}
 func (i *PatchIndex) drop() []string {
 	// always drop unused indexes
 	return []string{
@@ -223,43 +253,59 @@ func (i *PatchIndex) drop() []string {
 type PatchConstraint struct {
 	from, to  *Constraint
 	tableName string
+	newTable  bool
 }
 
 func (c *PatchConstraint) GenerateSQL() []string {
 	if c.from != nil && c.to != nil {
+		c.from.Table = &c.tableName
+		c.to.Table = &c.tableName
 		return c.alter()
 	}
 	if c.from == nil {
+		c.to.Table = &c.tableName
 		return c.create()
 	}
+	c.from.Table = &c.tableName
 	return c.drop()
 }
 
-func (c *PatchConstraint) create() []string {
+func createConstraintDDL(ctr *Constraint, newTable bool) string {
 	sb := &strings.Builder{}
-	fmt.Fprint(sb, "CONSTRAINT ", c.to.Name)
-	if len(c.to.Check) > 0 {
-		fmt.Fprint(sb, " CHECK (", c.to.Check, ")")
+	if !newTable {
+		fmt.Fprintf(sb, "ALTER TABLE %s ADD ", *ctr.Table)
 	}
-	switch c.to.Type {
+	fmt.Fprint(sb, "CONSTRAINT ", ctr.Name)
+	if len(ctr.Check) > 0 {
+		fmt.Fprint(sb, " CHECK (", ctr.Check, ")")
+	}
+	switch ctr.Type {
 	case TypeFK:
-		if c.to.ReferenceTable == nil {
-			fmt.Fprint(sb, " FOREIGN KEY (", strings.Join(c.to.Columns, ", "), ")")
-			fmt.Fprintf(sb, " REFERENCES %s (%s)", *c.to.ReferenceTable, strings.Join(c.to.ReferenceColumns, ", "))
-			if len(c.to.OnDelete) > 0 {
-				fmt.Fprint(sb, " ON DELETE ", c.to.OnDelete)
+		if ctr.ReferenceTable == nil {
+			fmt.Fprint(sb, " FOREIGN KEY (", strings.Join(ctr.Columns, ", "), ")")
+			fmt.Fprintf(sb, " REFERENCES %s (%s)", *ctr.ReferenceTable, strings.Join(ctr.ReferenceColumns, ", "))
+			if len(ctr.OnDelete) > 0 {
+				fmt.Fprint(sb, " ON DELETE ", ctr.OnDelete)
 			}
 		}
 	case TypePK:
-		fmt.Fprint(sb, " PRIMARY KEY (", strings.Join(c.to.Columns, ", "), ")")
+		fmt.Fprint(sb, " PRIMARY KEY (", strings.Join(ctr.Columns, ", "), ")")
 	case TypeUQ:
-		fmt.Fprint(sb, " UNIQUE (", strings.Join(c.to.Columns, ", "), ")")
+		fmt.Fprint(sb, " UNIQUE (", strings.Join(ctr.Columns, ", "), ")")
 	}
-	return []string{sb.String()}
+	return sb.String()
+}
+
+func (c *PatchConstraint) create() []string {
+	return []string{createConstraintDDL(c.to, c.newTable)}
 }
 
 func (c *PatchConstraint) alter() []string {
-	return nil
+	if strings.EqualFold(createConstraintDDL(c.from, c.newTable),
+		createConstraintDDL(c.to, c.newTable)) {
+		return nil
+	}
+	return append(c.drop(), c.create()...)
 }
 
 func (c *PatchConstraint) drop() []string {
@@ -283,26 +329,36 @@ func (r *PatchRelation) GenerateSQL() []string {
 	return r.drop()
 }
 
-func (r *PatchRelation) create() []string {
+func createRelationDDL(r *Relation) string {
 	sb := &strings.Builder{}
-	fmt.Fprintf(sb, "ALTER TABLE %s ADD FOREIGN KEY (", r.to.Table.Name)
-	for i, c := range r.to.Columns {
+	fmt.Fprintf(sb, "ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (", r.Table.Name, r.Name)
+	for i, c := range r.Columns {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
 		sb.WriteString(c.Name)
 	}
-	fmt.Fprintf(sb, ") REFERENCES %s (", r.to.ParentTable.Name)
-	for i, c := range r.to.ParentColumns {
+	fmt.Fprintf(sb, ") REFERENCES %s (", r.ParentTable.Name)
+	for i, c := range r.ParentColumns {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
 		sb.WriteString(c.Name)
 	}
 	sb.WriteByte(')')
-	return []string{sb.String()}
+	return sb.String()
 }
-func (r *PatchRelation) alter() []string { return nil }
+
+func (r *PatchRelation) create() []string {
+	return []string{createRelationDDL(r.to)}
+}
+func (r *PatchRelation) alter() []string {
+	if strings.EqualFold(createRelationDDL(r.from),
+		createRelationDDL(r.to)) {
+		return nil
+	}
+	return append(r.drop(), r.create()...)
+}
 func (r *PatchRelation) drop() []string {
 	// TODO:
 	// declare r record;
@@ -389,6 +445,9 @@ func (s *PatchSchema) Build(from, to *Schema) {
 			}
 		}
 		for _, idx := range t.Indexes {
+			if idx.Table == nil {
+				idx.Table = &t.Name
+			}
 			pi := &PatchIndex{
 				from: idx,
 			}
@@ -400,7 +459,38 @@ func (s *PatchSchema) Build(from, to *Schema) {
 			}
 			pt.indexes = append(pt.indexes, pi)
 		}
+
+		if rt != nil {
+			for _, idx := range rt.Indexes {
+				if idx.Table == nil {
+					idx.Table = &rt.Name
+				}
+				pi := &PatchIndex{
+					to: idx,
+				}
+				ti, err := t.FindIndexByName(idx.Name)
+				fnd := false
+				if err == nil {
+					pi.from = ti
+
+					for _, v := range pt.indexes {
+						if v.from == pi.from &&
+							v.to == pi.to {
+							fnd = true
+							break
+						}
+					}
+				}
+				if !fnd {
+					pt.indexes = append(pt.indexes, pi)
+				}
+			}
+		}
+
 		for _, c := range t.Constraints {
+			if c.Table == nil {
+				c.Table = &t.Name
+			}
 			pc := &PatchConstraint{
 				tableName: t.Name,
 				from:      c,
@@ -412,6 +502,34 @@ func (s *PatchSchema) Build(from, to *Schema) {
 				}
 			}
 			pt.constraints = append(pt.constraints, pc)
+		}
+
+		if rt != nil {
+			for _, c := range rt.Constraints {
+				if c.Table == nil {
+					c.Table = &rt.Name
+				}
+				pc := &PatchConstraint{
+					tableName: rt.Name,
+					to:        c,
+				}
+				tc, err := t.FindConstraintByName(c.Name)
+				fnd := false
+				if err == nil {
+					pc.from = tc
+
+					for _, v := range pt.constraints {
+						if v.from == pc.from &&
+							v.to == pc.to {
+							fnd = true
+							break
+						}
+					}
+				}
+				if !fnd {
+					pt.constraints = append(pt.constraints, pc)
+				}
+			}
 		}
 	}
 	// create tables
@@ -435,19 +553,27 @@ func (s *PatchSchema) Build(from, to *Schema) {
 			pc := &PatchColumn{
 				tableName: rt.Name,
 				to:        c,
+				newTable:  true,
 			}
 			pt.columns = append(pt.columns, pc)
 		}
 		for _, idx := range rt.Indexes {
+			if idx.Table == nil {
+				idx.Table = &rt.Name
+			}
 			pi := &PatchIndex{
 				to: idx,
 			}
 			pt.indexes = append(pt.indexes, pi)
 		}
 		for _, c := range rt.Constraints {
+			if c.Table == nil {
+				c.Table = &rt.Name
+			}
 			pc := &PatchConstraint{
 				tableName: rt.Name,
 				to:        c,
+				newTable:  true,
 			}
 			pt.constraints = append(pt.constraints, pc)
 		}

@@ -168,6 +168,7 @@ func (p *Postgres) Analyze(s *schema.Schema) error {
 					constraint.OnDelete = strings.TrimSpace(ss[5])
 				}
 				relation := &schema.Relation{
+					Name:     constraintName,
 					Table:    table,
 					OnDelete: constraint.OnDelete,
 					Def:      constraintDef,
