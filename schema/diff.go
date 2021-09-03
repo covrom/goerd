@@ -238,6 +238,12 @@ func (i *PatchIndex) create() []string {
 	return []string{createIndexDDL(i.to)}
 }
 func (i *PatchIndex) alter() []string {
+	if i.from.MethodName == "" {
+		i.from.MethodName = "btree"
+	}
+	if i.to.MethodName == "" {
+		i.to.MethodName = "btree"
+	}
 	if strings.EqualFold(createIndexDDL(i.from), createIndexDDL(i.to)) {
 		return nil
 	}

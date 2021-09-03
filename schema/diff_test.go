@@ -367,3 +367,73 @@ CREATE INDEX table1_col2 ON table1(column2,column3)` {
 	})
 
 }
+
+func TestPatchSchema_BuildChangeIdx2(t *testing.T) {
+	from := &Schema{
+		CurrentSchema: "public",
+		Tables: []*Table{
+			{
+				Name: "projects",
+				Type: "TABLE",
+				Columns: []*Column{
+					{
+						Name:       "id",
+						Type:       "uuid",
+						PrimaryKey: true,
+					},
+					{
+						Name:     "deleted_at",
+						Type:     "timestamptz",
+						Nullable: true,
+					},
+				},
+				Indexes: []*Index{
+					{
+						Name:       "projects_deleted_at",
+						MethodName: "btree",
+						Columns:    []string{"deleted_at"},
+					},
+				},
+			},
+		},
+	}
+
+	to := &Schema{
+		CurrentSchema: "public",
+		Tables: []*Table{
+			{
+				Name: "projects",
+				Type: "TABLE",
+				Columns: []*Column{
+					{
+						Name:       "id",
+						Type:       "uuid",
+						PrimaryKey: true,
+					},
+					{
+						Name:     "deleted_at",
+						Type:     "timestamptz",
+						Nullable: true,
+					},
+				},
+				Indexes: []*Index{
+					{
+						Name:    "projects_deleted_at",
+						Columns: []string{"deleted_at"},
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("1", func(t *testing.T) {
+		s := &PatchSchema{}
+		s.Build(from, to)
+		qs := s.GenerateSQL()
+		qss := strings.Join(qs, "\n")
+		if qss != `` {
+			t.Error(qss)
+		}
+	})
+
+}
