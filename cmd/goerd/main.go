@@ -67,7 +67,8 @@ func main() {
 						fmt.Println("--", q)
 						continue
 					}
-					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") ||
+						strings.Contains(strings.ToUpper(q), "DROP CONSTRAINT") {
 						fmt.Println("--", q)
 						continue
 					}
@@ -129,7 +130,8 @@ func main() {
 						fmt.Println("--", q)
 						continue
 					}
-					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") ||
+						strings.Contains(strings.ToUpper(q), "DROP CONSTRAINT") {
 						fmt.Println("--", q)
 						continue
 					}
@@ -151,7 +153,8 @@ func main() {
 						fmt.Println("--", q)
 						continue
 					}
-					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") ||
+						strings.Contains(strings.ToUpper(q), "DROP CONSTRAINT") {
 						fmt.Println("--", q)
 						continue
 					}
@@ -224,7 +227,8 @@ func main() {
 						fmt.Println("--", q)
 						continue
 					}
-					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") ||
+						strings.Contains(strings.ToUpper(q), "DROP CONSTRAINT") {
 						fmt.Println("--", q)
 						continue
 					}
@@ -246,7 +250,8 @@ func main() {
 						fmt.Println("--", q)
 						continue
 					}
-					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") {
+					if strings.Contains(strings.ToUpper(q), "DROP COLUMN") ||
+						strings.Contains(strings.ToUpper(q), "DROP CONSTRAINT") {
 						fmt.Println("--", q)
 						continue
 					}

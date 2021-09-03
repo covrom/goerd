@@ -315,7 +315,10 @@ func (c *PatchConstraint) alter() []string {
 }
 
 func (c *PatchConstraint) drop() []string {
-	// always drop unused constraints
+	if c.to == nil && c.from.Type == TypePK {
+		// pk not drop
+		return nil
+	}
 	return []string{
 		fmt.Sprintf("ALTER TABLE %s DROP CONSTRAINT IF EXISTS %s", c.tableName, c.from.Name),
 	}
