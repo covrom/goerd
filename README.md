@@ -71,7 +71,9 @@ Apply schema from DB1 to DB2:
 
 ### API
 
-See [docs](https://pkg.go.dev/github.com/covrom/goerd).
+[Productive usage example](goerd_test.go#18)
+
+[Docs](https://pkg.go.dev/github.com/covrom/goerd).
 
 ### testing and examples 
 ```docker-compose up``` and see `./output/schema.yaml`
