@@ -11,7 +11,12 @@ This tool allows you to turn schemas into instructions for the database, includi
 
 ![Conceptual view](concept.png)
 
-## Install
+### API
+
+Use as library:
+[Productive usage example](goerd_test.go#18)
+
+## Install schema tool
 
 `go install github.com/covrom/goerd/cmd/goerd@latest`
 
@@ -34,7 +39,7 @@ Example of generated plantuml:
 
 ![Plantuml view](plantuml-example.png)
 
-### Usage
+### Tool usage
 
 Save database schema to yaml schema or PlantUML:
 
@@ -69,9 +74,7 @@ Apply schema from DB1 to DB2:
 `goerd -c apply -from "postgres://username:password@url:port/DB1" -to "postgres://username:password@url:port/DB2"`
 
 
-### API
-
-[Productive usage example](goerd_test.go#18)
+### Docs
 
 [Docs](https://pkg.go.dev/github.com/covrom/goerd).
 
