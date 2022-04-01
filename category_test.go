@@ -164,3 +164,44 @@ func (d *Categorys) ListCategoriesUpdatedFrom(ctx context.Context, updatedFrom t
 
 	return ret, nil
 }
+
+func CategoryModel() *goerd.ObjectModel[Category] {
+	md := goerd.Model[Category](
+		"categories",
+		goerd.Field[uuid.UUID](&schema.Column{
+			Name:       "id",
+			Type:       "uuid",
+			PrimaryKey: true,
+		}),
+		goerd.Field[time.Time](&schema.Column{
+			Name: "created_at",
+			Type: "timestamptz",
+		}),
+		goerd.Field[time.Time](&schema.Column{
+			Name: "updated_at",
+			Type: "timestamptz",
+		}),
+		goerd.Field[sql.NullTime](&schema.Column{
+			Name:     "deleted_at",
+			Type:     "timestamptz",
+			Nullable: true,
+		}),
+		goerd.Field[uuid.UUID](&schema.Column{
+			Name: "parent_id",
+			Type: "uuid",
+		}),
+		goerd.Field[string](&schema.Column{
+			Name: "name",
+			Type: "varchar(200)",
+		}),
+		goerd.Field[bool](&schema.Column{
+			Name: "is_disabled",
+			Type: "boolean",
+			Default: sql.NullString{
+				String: "false",
+				Valid:  true,
+			},
+		}),
+	)
+	return md
+}
