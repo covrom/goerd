@@ -593,7 +593,7 @@ func (s *PatchSchema) Build(from, to *Schema) {
 		pt := &PatchRelation{
 			from: r,
 		}
-		rt, err := to.FindRelation(r.Columns, r.ParentColumns)
+		rt, err := to.FindRelation(r.Table.Name, r.Columns, r.ParentColumns)
 		if err == nil {
 			pt.to = rt
 		}
@@ -604,7 +604,7 @@ func (s *PatchSchema) Build(from, to *Schema) {
 		pt := &PatchRelation{
 			to: r,
 		}
-		_, err := from.FindRelation(r.Columns, r.ParentColumns)
+		_, err := from.FindRelation(r.Table.Name, r.Columns, r.ParentColumns)
 		if err != nil {
 			s.relations = append(s.relations, pt)
 		}

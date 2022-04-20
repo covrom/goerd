@@ -116,10 +116,10 @@ func (s *Schema) FindTableByName(name string) (*Table, error) {
 }
 
 // FindRelation ...
-func (s *Schema) FindRelation(cs, pcs []*Column) (*Relation, error) {
+func (s *Schema) FindRelation(tblName string, cs, pcs []*Column) (*Relation, error) {
 L:
 	for _, r := range s.Relations {
-		if len(r.Columns) != len(cs) || len(r.ParentColumns) != len(pcs) {
+		if len(r.Columns) != len(cs) || len(r.ParentColumns) != len(pcs) || r.Table.Name != tblName {
 			continue
 		}
 		for _, rc := range r.Columns {
