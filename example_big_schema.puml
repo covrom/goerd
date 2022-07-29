@@ -14,7 +14,7 @@ rectangle "candidate" {
 		created_at <font color="#666666">[timestamptz]</font>
 		employment_date <font color="#666666">[timestamptz]</font>
 		esia <font color="#666666">[jsonb]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		lna_approved_at <font color="#666666">[timestamptz]</font>
 		offer_approved_at <font color="#666666">[timestamptz]</font>
 		offer_seen_at <font color="#666666">[timestamptz]</font>
@@ -26,8 +26,6 @@ rectangle "candidate" {
 		td_seen_at <font color="#666666">[timestamptz]</font>
 		unique_link <font color="#666666">[uuid]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
-	
 	}
 	entity idx_created_at as "idx_created_at" << (I,#D25D8A) >> {
 		created_at
@@ -49,10 +47,9 @@ rectangle "candidate_document" {
 		doc_data <font color="#666666">[jsonb]</font>
 		doc_subtype <font color="#666666">[uuid]</font>
 		doc_type <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		status <font color="#666666">[varchar(50)]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 }
 rectangle "candidate_dss_cert" {
@@ -62,12 +59,11 @@ rectangle "candidate_dss_cert" {
 		dss_certificate <font color="#666666">[varchar]</font>
 		dss_certificate_id <font color="#666666">[bigint]</font>
 		dss_status <font color="#666666">[varchar]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		resp_code <font color="#666666">[bigint]</font>
 		resp_description <font color="#666666">[varchar]</font>
 		resp_type <font color="#666666">[varchar]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 	entity idx_candidate_dss_cert_dss_certificate_id as "idx_candidate_dss_cert_dss_certificate_id" << (I,#D25D8A) >> {
 		dss_certificate_id
@@ -80,12 +76,11 @@ rectangle "candidate_dss_document" {
 		created_at <font color="#666666">[timestamptz]</font>
 		dss_document_id <font color="#666666">[bigint]</font>
 		# file_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		resp_code <font color="#666666">[bigint]</font>
 		resp_description <font color="#666666">[varchar]</font>
 		resp_type <font color="#666666">[varchar]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 	entity idx_candidate_dss_document_dss_document_id as "idx_candidate_dss_document_dss_document_id" << (I,#D25D8A) >> {
 		dss_document_id
@@ -100,12 +95,11 @@ rectangle "candidate_dss_sign" {
 		dss_sign_status <font color="#666666">[varchar]</font>
 		dss_signature <font color="#666666">[varchar]</font>
 		dss_signature_id <font color="#666666">[bigint]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		resp_code <font color="#666666">[bigint]</font>
 		resp_description <font color="#666666">[varchar]</font>
 		resp_type <font color="#666666">[varchar]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 	entity idx_candidate_dss_sign_dss_document_id as "idx_candidate_dss_sign_dss_document_id" << (I,#D25D8A) >> {
 		dss_document_id
@@ -122,12 +116,11 @@ rectangle "candidate_dss_user" {
 		created_at <font color="#666666">[timestamptz]</font>
 		dss_password <font color="#666666">[varchar]</font>
 		dss_user_id <font color="#666666">[bigint]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		resp_code <font color="#666666">[bigint]</font>
 		resp_description <font color="#666666">[varchar]</font>
 		resp_type <font color="#666666">[varchar]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 	entity idx_candidate_dss_user_dss_user_id as "idx_candidate_dss_user_dss_user_id" << (I,#D25D8A) >> {
 		dss_user_id
@@ -139,18 +132,14 @@ rectangle "candidate_status_history" {
 		# candidate_id <font color="#666666">[uuid]</font>
 		comment <font color="#666666">[text]</font>
 		created_at <font color="#666666">[timestamptz]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		status <font color="#666666">[varchar(50)]</font>
-	--
-	
 	}
 }
-rectangle "cities_mts" {
-	entity cities_mts as "cities_mts" << (T,#5DBCD2) >> {
-		id <font color="#666666">[uuid]</font>
+rectangle "cities" {
+	entity cities as "cities" << (T,#5DBCD2) >> {
+		* id <font color="#666666">[uuid]</font>
 		name <font color="#666666">[varchar]</font>
-	--
-	
 	}
 }
 rectangle "course" {
@@ -158,10 +147,9 @@ rectangle "course" {
 		company_ids <font color="#666666">[jsonb]</font>
 		created_at <font color="#666666">[timestamptz]</font>
 		# file_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		link <font color="#666666">[varchar]</font>
 		title <font color="#666666">[varchar]</font>
-	--
 	}
 }
 rectangle "course_pass" {
@@ -169,10 +157,8 @@ rectangle "course_pass" {
 		# candidate_id <font color="#666666">[uuid]</font>
 		# course_id <font color="#666666">[uuid]</font>
 		created_at <font color="#666666">[timestamptz]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		source_system <font color="#666666">[varchar]</font>
-	--
-	
 	}
 }
 rectangle "custom_file" {
@@ -180,8 +166,7 @@ rectangle "custom_file" {
 		data <font color="#666666">[jsonb]</font>
 		entity_id <font color="#666666">[uuid]</font>
 		# file_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
-	--
+		* id <font color="#666666">[uuid]</font>
 	}
 	entity cf_entity_id as "cf_entity_id" << (I,#D25D8A) >> {
 		entity_id
@@ -194,9 +179,7 @@ rectangle "custom_file_approve" {
 		created_at <font color="#666666">[timestamptz]</font>
 		# custom_file_id <font color="#666666">[uuid]</font>
 		entity_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
-	--
-	
+		* id <font color="#666666">[uuid]</font>
 	}
 	entity cfa_entity_id as "cfa_entity_id" << (I,#D25D8A) >> {
 		entity_id
@@ -207,21 +190,18 @@ rectangle "dictionaries" {
 	entity dictionaries as "dictionaries" << (T,#5DBCD2) >> {
 		data <font color="#666666">[jsonb]</font>
 		dictionary_name <font color="#666666">[varchar(50)]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		parent_id <font color="#666666">[uuid]</font>
 		value <font color="#666666">[varchar(50)]</font>
-	--
-	
 	}
 }
 rectangle "document_template" {
 	entity document_template as "document_template" << (T,#5DBCD2) >> {
-		doc_subtype <font color="#666666">[uuid]</font>
-		doc_type <font color="#666666">[uuid]</font>
+		* doc_subtype <font color="#666666">[uuid]</font>
+		* doc_type <font color="#666666">[uuid]</font>
 		status <font color="#666666">[varchar]</font>
-		# template_name <font color="#666666">[varchar]</font>
-		# template_type <font color="#666666">[integer]</font>
-	--
+		* # template_name <font color="#666666">[varchar]</font>
+		* # template_type <font color="#666666">[integer]</font>
 	}
 }
 rectangle "employee_document" {
@@ -236,13 +216,12 @@ rectangle "employee_document" {
 		doc_data <font color="#666666">[jsonb]</font>
 		doc_subtype <font color="#666666">[uuid]</font>
 		doc_type <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		# reference_id <font color="#666666">[uuid]</font>
 		status <font color="#666666">[varchar(50)]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
 		user_id <font color="#666666">[uuid]</font>
 		visited_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 	entity uniq_employee_document as "uniq_employee_document" << (I,#D25D8A) >> {
 		doc_subtype
@@ -254,10 +233,8 @@ rectangle "employee_document" {
 rectangle "employee_document_category" {
 	entity employee_document_category as "employee_document_category" << (T,#5DBCD2) >> {
 		created_at <font color="#666666">[timestamptz]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		name <font color="#666666">[varchar]</font>
-	--
-	
 	}
 }
 rectangle "employee_document_type" {
@@ -267,9 +244,8 @@ rectangle "employee_document_type" {
 		created_at <font color="#666666">[timestamptz]</font>
 		expiration_at <font color="#666666">[timestamptz]</font>
 		# file_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		name <font color="#666666">[varchar]</font>
-	--
 	}
 }
 rectangle "file" {
@@ -280,11 +256,9 @@ rectangle "file" {
 		document_type <font color="#666666">[varchar(30)]</font>
 		dss_hash_b64 <font color="#666666">[varchar]</font>
 		file_id <font color="#666666">[varchar]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		mime <font color="#666666">[varchar]</font>
 		original_name <font color="#666666">[varchar(255)]</font>
-	--
-	
 	}
 	entity idx_category as "idx_category" << (I,#D25D8A) >> {
 		category
@@ -299,28 +273,25 @@ rectangle "file_sign" {
 	entity file_sign as "file_sign" << (T,#5DBCD2) >> {
 		created_at <font color="#666666">[timestamptz]</font>
 		# file_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		sign <font color="#666666">[varchar]</font>
 		# signer_id <font color="#666666">[uuid]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 }
 rectangle "firm" {
 	entity firm as "firm" << (T,#5DBCD2) >> {
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		name <font color="#666666">[varchar]</font>
-	--
 	}
 }
 rectangle "forms" {
 	entity forms as "forms" << (T,#5DBCD2) >> {
 		description <font color="#666666">[varchar]</font>
-		doc_subtype <font color="#666666">[uuid]</font>
-		# doc_type <font color="#666666">[uuid]</font>
+		* doc_subtype <font color="#666666">[uuid]</font>
+		* # doc_type <font color="#666666">[uuid]</font>
 		fields <font color="#666666">[jsonb]</font>
 		title <font color="#666666">[varchar]</font>
-	--
 	}
 }
 rectangle "generated_file" {
@@ -328,39 +299,68 @@ rectangle "generated_file" {
 		created_at <font color="#666666">[timestamptz]</font>
 		entity_id <font color="#666666">[uuid]</font>
 		# file_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		template_name <font color="#666666">[varchar]</font>
 		template_type <font color="#666666">[integer]</font>
-	--
-	
 	}
 }
 rectangle "goose_db_version" {
 	entity goose_db_version as "goose_db_version" << (T,#5DBCD2) >> {
-		id <font color="#666666">[integer]</font>
+		* id <font color="#666666">[integer]</font>
 		is_applied <font color="#666666">[boolean]</font>
 		tstamp <font color="#666666">[timestamp without time zone]</font>
 		version_id <font color="#666666">[bigint]</font>
-	--
 	}
 }
 rectangle "hr_schedule" {
 	entity hr_schedule as "hr_schedule" << (T,#5DBCD2) >> {
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		region <font color="#666666">[varchar]</font>
 		reserved <font color="#666666">[integer]</font>
 		slots <font color="#666666">[integer]</font>
 		time <font color="#666666">[timestamptz]</font>
-	--
-	
+	}
+}
+rectangle "hr_xxhr_kategoriya_godnosti_k_voen_slujbe" {
+	entity hr_xxhr_kategoriya_godnosti_k_voen_slujbe as "hr_xxhr_kategoriya_godnosti_k_voen_slujbe" << (T,#5DBCD2) >> {
+		description <font color="#666666">[varchar(150)]</font>
+		* id <font color="#666666">[uuid]</font>
+		value <font color="#666666">[varchar(150)]</font>
+	}
+}
+rectangle "hr_xxhr_sostav_officer" {
+	entity hr_xxhr_sostav_officer as "hr_xxhr_sostav_officer" << (T,#5DBCD2) >> {
+		description <font color="#666666">[varchar(150)]</font>
+		* id <font color="#666666">[uuid]</font>
+		value <font color="#666666">[varchar(150)]</font>
+	}
+}
+rectangle "hr_xxhr_sostav_soldier" {
+	entity hr_xxhr_sostav_soldier as "hr_xxhr_sostav_soldier" << (T,#5DBCD2) >> {
+		description <font color="#666666">[varchar(150)]</font>
+		* id <font color="#666666">[uuid]</font>
+		value <font color="#666666">[varchar(150)]</font>
+	}
+}
+rectangle "hr_xxhr_voinskoe_zvanije_officer" {
+	entity hr_xxhr_voinskoe_zvanije_officer as "hr_xxhr_voinskoe_zvanije_officer" << (T,#5DBCD2) >> {
+		description <font color="#666666">[varchar(150)]</font>
+		* id <font color="#666666">[uuid]</font>
+		value <font color="#666666">[varchar(150)]</font>
+	}
+}
+rectangle "hr_xxhr_voinskoe_zvanije_soldier" {
+	entity hr_xxhr_voinskoe_zvanije_soldier as "hr_xxhr_voinskoe_zvanije_soldier" << (T,#5DBCD2) >> {
+		description <font color="#666666">[varchar(150)]</font>
+		* id <font color="#666666">[uuid]</font>
+		value <font color="#666666">[varchar(150)]</font>
 	}
 }
 rectangle "mobile_course" {
 	entity mobile_course as "mobile_course" << (T,#5DBCD2) >> {
-		# candidate_id <font color="#666666">[uuid]</font>
+		* # candidate_id <font color="#666666">[uuid]</font>
 		created_at <font color="#666666">[timestamptz]</font>
-		mobile_course_id <font color="#666666">[varchar]</font>
-	--
+		* mobile_course_id <font color="#666666">[varchar]</font>
 	}
 }
 rectangle "notify_email" {
@@ -368,76 +368,33 @@ rectangle "notify_email" {
 		additional_info <font color="#666666">[jsonb]</font>
 		created_at <font color="#666666">[timestamptz]</font>
 		error <font color="#666666">[varchar]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		payload <font color="#666666">[jsonb]</font>
 		to_addr <font color="#666666">[varchar]</font>
 		tpl <font color="#666666">[varchar]</font>
-	--
 	}
 	entity idx_to_addr as "idx_to_addr" << (I,#D25D8A) >> {
 		to_addr
 	}
 	"idx_to_addr" -- "notify_email" : " btree "
 }
-rectangle "oebs_hr_xxhr_kategoriya_godnosti_k_voen_slujbe" {
-	entity oebs_hr_xxhr_kategoriya_godnosti_k_voen_slujbe as "oebs_hr_xxhr_kategoriya_godnosti_k_voen_slujbe" << (T,#5DBCD2) >> {
-		description <font color="#666666">[varchar(150)]</font>
-		id <font color="#666666">[uuid]</font>
-		value <font color="#666666">[varchar(150)]</font>
-	--
-	}
-}
-rectangle "oebs_hr_xxhr_sostav_officer" {
-	entity oebs_hr_xxhr_sostav_officer as "oebs_hr_xxhr_sostav_officer" << (T,#5DBCD2) >> {
-		description <font color="#666666">[varchar(150)]</font>
-		id <font color="#666666">[uuid]</font>
-		value <font color="#666666">[varchar(150)]</font>
-	--
-	}
-}
-rectangle "oebs_hr_xxhr_sostav_soldier" {
-	entity oebs_hr_xxhr_sostav_soldier as "oebs_hr_xxhr_sostav_soldier" << (T,#5DBCD2) >> {
-		description <font color="#666666">[varchar(150)]</font>
-		id <font color="#666666">[uuid]</font>
-		value <font color="#666666">[varchar(150)]</font>
-	--
-	}
-}
-rectangle "oebs_hr_xxhr_voinskoe_zvanije_officer" {
-	entity oebs_hr_xxhr_voinskoe_zvanije_officer as "oebs_hr_xxhr_voinskoe_zvanije_officer" << (T,#5DBCD2) >> {
-		description <font color="#666666">[varchar(150)]</font>
-		id <font color="#666666">[uuid]</font>
-		value <font color="#666666">[varchar(150)]</font>
-	--
-	}
-}
-rectangle "oebs_hr_xxhr_voinskoe_zvanije_soldier" {
-	entity oebs_hr_xxhr_voinskoe_zvanije_soldier as "oebs_hr_xxhr_voinskoe_zvanije_soldier" << (T,#5DBCD2) >> {
-		description <font color="#666666">[varchar(150)]</font>
-		id <font color="#666666">[uuid]</font>
-		value <font color="#666666">[varchar(150)]</font>
-	--
-	}
-}
 rectangle "person" {
 	entity person as "person" << (T,#5DBCD2) >> {
 		email <font color="#666666">[varchar]</font>
 		employee_id <font color="#666666">[varchar(50)]</font>
 		first_name <font color="#666666">[varchar]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		last_name <font color="#666666">[varchar]</font>
 		login <font color="#666666">[varchar]</font>
 		main_assignment <font color="#666666">[boolean]</font>
 		patronymic_name <font color="#666666">[varchar]</font>
 		position <font color="#666666">[varchar]</font>
-	--
 	}
 }
 rectangle "person_firm" {
 	entity person_firm as "person_firm" << (T,#5DBCD2) >> {
 		employee_id <font color="#666666">[varchar(50)]</font>
 		firm_id <font color="#666666">[uuid]</font>
-	--
 	}
 }
 rectangle "person_info" {
@@ -445,32 +402,28 @@ rectangle "person_info" {
 		division <font color="#666666">[varchar]</font>
 		employee_id <font color="#666666">[varchar(50)]</font>
 		first_name <font color="#666666">[varchar]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		last_name <font color="#666666">[varchar]</font>
 		patronymic_name <font color="#666666">[varchar]</font>
 		position <font color="#666666">[varchar]</font>
 		tab_num <font color="#666666">[varchar]</font>
-	--
-	
 	}
 }
 rectangle "person_subdivision" {
 	entity person_subdivision as "person_subdivision" << (T,#5DBCD2) >> {
 		employee_id <font color="#666666">[varchar(50)]</font>
 		subdivision_id <font color="#666666">[uuid]</font>
-	--
 	}
 }
 rectangle "position" {
 	entity position as "position" << (T,#5DBCD2) >> {
 		created_at <font color="#666666">[timestamptz]</font>
 		# firm_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		medical_check_required <font color="#666666">[boolean]</font>
 		name <font color="#666666">[varchar(255)]</font>
 		# subdivision_id <font color="#666666">[uuid]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
 	}
 }
 rectangle "static_file" {
@@ -478,27 +431,23 @@ rectangle "static_file" {
 		doc_subtype <font color="#666666">[uuid]</font>
 		doc_type <font color="#666666">[uuid]</font>
 		# file_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
-	--
-	
+		* id <font color="#666666">[uuid]</font>
 	}
 }
 rectangle "subdivision" {
 	entity subdivision as "subdivision" << (T,#5DBCD2) >> {
 		firm_id <font color="#666666">[uuid]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		name <font color="#666666">[varchar]</font>
 		parent_id <font color="#666666">[uuid]</font>
-	--
 	}
 }
 rectangle "template" {
 	entity template as "template" << (T,#5DBCD2) >> {
 		data_collector <font color="#666666">[varchar]</font>
 		file_ext <font color="#666666">[varchar]</font>
-		template_name <font color="#666666">[varchar]</font>
-		template_type <font color="#666666">[integer]</font>
-	--
+		* template_name <font color="#666666">[varchar]</font>
+		* template_type <font color="#666666">[integer]</font>
 	}
 }
 rectangle "users" {
@@ -506,16 +455,11 @@ rectangle "users" {
 		created_at <font color="#666666">[timestamptz]</font>
 		email <font color="#666666">[varchar]</font>
 		employee_id <font color="#666666">[varchar(50)]</font>
-		id <font color="#666666">[uuid]</font>
+		* id <font color="#666666">[uuid]</font>
 		login <font color="#666666">[varchar]</font>
 		name <font color="#666666">[varchar]</font>
 		role <font color="#666666">[varchar(50)]</font>
 		updated_at <font color="#666666">[timestamptz]</font>
-	--
-	
-	
-	
-	
 	}
 }
 
@@ -523,8 +467,8 @@ rectangle "users" {
 "candidate" }-- "users" : "RESTRICT"
 "candidate_document" }-- "candidate" : "CASCADE"
 "candidate_dss_cert" }-- "candidate" : "CASCADE"
-"candidate_dss_document" }-- "candidate" : "CASCADE"
 "candidate_dss_document" }-- "file" : "CASCADE"
+"candidate_dss_document" }-- "candidate" : "CASCADE"
 "candidate_dss_user" }-- "candidate" : "CASCADE"
 "candidate_status_history" }-- "candidate" : "CASCADE"
 "course" }-- "file" : "CASCADE"
@@ -533,8 +477,8 @@ rectangle "users" {
 "custom_file" }-- "file" : ""
 "custom_file_approve" }-- "custom_file" : "RESTRICT"
 "document_template" }-- "template" : ""
-"employee_document" }-- "users" : "RESTRICT"
 "employee_document" }-- "employee_document" : "CASCADE"
+"employee_document" }-- "users" : "RESTRICT"
 "employee_document_type" }-- "employee_document_category" : "CASCADE"
 "employee_document_type" }-- "file" : "SET NULL"
 "file_sign" }-- "file" : "RESTRICT"

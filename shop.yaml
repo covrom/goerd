@@ -1,0 +1,31 @@
+name: "shop"
+schema: public
+tables:
+  products:
+    columns:
+      id:
+        type: uuid
+        pk: true
+      created_at:
+        type: timestamptz
+      updated_at:
+        type: timestamptz
+      deleted_at:
+        type: timestamptz
+        nullable: true
+      category_id:
+        type: uuid
+      name:
+        type: varchar
+      code:
+        type: varchar
+      unit:
+        type: varchar
+    indexes:
+      products_deleted_at:
+        columns: [deleted_at]
+      products_category_id:
+        columns: [category_id]
+      products_code:
+        columns: [code]
+  

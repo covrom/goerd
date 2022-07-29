@@ -282,7 +282,7 @@ tables:
         columns: [candidate_id]
         parentColumns: [id]
         onDelete: CASCADE
-  cities_mts:
+  cities:
     type: TABLE
     columns:
       id:
@@ -291,7 +291,7 @@ tables:
       name:
         type: varchar
     constraints:
-      cities_mts_name_key:
+      cities_name_key:
         type: UNIQUE
         columns: [name]
   course:
@@ -739,7 +739,7 @@ tables:
       idx_to_addr:
         method: btree
         columns: [to_addr]
-  oebs_hr_xxhr_kategoriya_godnosti_k_voen_slujbe:
+  hr_xxhr_kategoriya_godnosti_k_voen_slujbe:
     type: TABLE
     columns:
       description:
@@ -749,7 +749,7 @@ tables:
         pk: true
       value:
         type: varchar(150)
-  oebs_hr_xxhr_sostav_officer:
+  hr_xxhr_sostav_officer:
     type: TABLE
     columns:
       description:
@@ -759,7 +759,7 @@ tables:
         pk: true
       value:
         type: varchar(150)
-  oebs_hr_xxhr_sostav_soldier:
+  hr_xxhr_sostav_soldier:
     type: TABLE
     columns:
       description:
@@ -769,7 +769,7 @@ tables:
         pk: true
       value:
         type: varchar(150)
-  oebs_hr_xxhr_voinskoe_zvanije_officer:
+  hr_xxhr_voinskoe_zvanije_officer:
     type: TABLE
     columns:
       description:
@@ -779,7 +779,7 @@ tables:
         pk: true
       value:
         type: varchar(150)
-  oebs_hr_xxhr_voinskoe_zvanije_soldier:
+  hr_xxhr_voinskoe_zvanije_soldier:
     type: TABLE
     columns:
       description:

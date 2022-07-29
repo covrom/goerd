@@ -3,7 +3,7 @@
 This is a New Era of migrations PostgreSQL databases with Golang.
 
 We no longer want to ensure the database schema with incremental patches.
-Shema MUST match what the app wants! It doesn't matter what was in the database before that.
+Shema MUST match what the app wants. It doesn't matter what was in the database before that.
 
 It could be empty, it could contain some data in any of its previous versions. It doesn't matter anymore. It is important that we carefully transform it into the target state. We will no longer be guessing about the target state of the database by patchset. This is a thing of the past. 
 
@@ -78,5 +78,7 @@ Apply schema from DB1 to DB2:
 
 [Docs](https://pkg.go.dev/github.com/covrom/goerd).
 
-### testing and examples 
+### Testing and Examples 
 ```docker-compose up``` and see `./output/schema.yaml`
+
+[Productive usage example](goerd_test.go#18)

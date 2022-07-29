@@ -12,14 +12,17 @@ import (
 )
 
 type Product struct {
-	ID         uuid.UUID
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  sql.NullTime
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
+
 	CategoryID uuid.UUID
-	Name       string
-	Code       string
-	Unit       string
+	Category   Category
+
+	Name string
+	Code string
+	Unit string
 }
 
 type Products struct{}

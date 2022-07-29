@@ -43,11 +43,7 @@ rectangle "{{ $t.Name }}" {
 	entity {{ $t.Name }} as "{{ $t.Name }}" << (V,#C6EDDB) >> {
 	{{- end }}
 	{{- range $ii, $c := $t.Columns }}
-		{{ $c.Name | html }} <font color="#666666">[{{ $c.Type | html }}]</font>
-	{{- end }}
-	--
-	{{- range $ii, $c := $t.Constraints }}
-	{{ $c.Def | html }}
+		{{if $c.PrimaryKey}}* {{end}}{{ $c.Name | html }} <font color="#666666">[{{ $c.Type | html }}]</font>
 	{{- end }}
 	}
 	{{- range $ii, $c := $t.Indexes }}
