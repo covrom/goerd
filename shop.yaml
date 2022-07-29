@@ -28,4 +28,27 @@ tables:
         columns: [category_id]
       products_code:
         columns: [code]
-  
+  categories:
+    columns:
+      id:
+        type: uuid
+        pk: true
+      created_at:
+        type: timestamptz
+      updated_at:
+        type: timestamptz
+      deleted_at:
+        type: timestamptz
+        nullable: true
+      parent_id:
+        type: uuid
+      name:
+        type: varchar
+      is_disabled:
+        type: boolean
+        default: false
+    indexes:
+      categories_deleted_at:
+        columns: [deleted_at]
+      categories_parent_id:
+        columns: [parent_id]

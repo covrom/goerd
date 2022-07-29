@@ -22,39 +22,82 @@ type Category struct {
 	IsDisabled bool
 }
 
-type Categorys struct{}
+type Categorys struct {
+	sc      *schema.Schema
+	t       *schema.Table
+	cols    []string
+	fields  func(Category) []interface{}
+	pfields func(*Category) []interface{}
+}
 
-func NewCategorys() *Categorys {
-	return &Categorys{}
+func NewCategorys(sc *schema.Schema) (*Categorys, error) {
+	tname := "categories"
+	t, err := sc.FindTableByName(tname)
+	if err != nil {
+		return nil, err
+	}
+	cs := &Categorys{
+		sc: sc,
+		t:  t,
+
+		cols: []string{
+			"id",
+			"created_at",
+			"updated_at",
+			"deleted_at",
+			"parent_id",
+			"name",
+			"is_disabled",
+		},
+
+		fields: func(p Category) []interface{} {
+			return []interface{}{
+				p.ID,
+				p.CreatedAt,
+				p.UpdatedAt,
+				p.DeletedAt,
+				p.ParentID,
+				p.Name,
+				p.IsDisabled,
+			}
+		},
+
+		pfields: func(p *Category) []interface{} {
+			return []interface{}{
+				&p.ID,
+				&p.CreatedAt,
+				&p.UpdatedAt,
+				&p.DeletedAt,
+				&p.ParentID,
+				&p.Name,
+				&p.IsDisabled,
+			}
+		},
+	}
+
+	for _, c := range cs.cols {
+		if _, err := t.FindColumnByName(c); err != nil {
+			return nil, err
+		}
+	}
+	return cs, nil
 }
 
 func (d *Categorys) Table() string {
-	return "categories"
+	return d.t.Name
 }
 
 func (d *Categorys) Columns() []string {
-	return []string{
-		"id",
-		"created_at",
-		"updated_at",
-		"deleted_at",
-		"parent_id",
-		"name",
-		"is_disabled",
-	}
+	return d.cols
 }
 
 // nolint hugeParam
 func (d *Categorys) Fields(p Category) []interface{} {
-	return []interface{}{
-		p.ID,
-		p.CreatedAt,
-		p.UpdatedAt,
-		p.DeletedAt,
-		p.ParentID,
-		p.Name,
-		p.IsDisabled,
-	}
+	return d.fields(p)
+}
+
+func (d *Categorys) PFields(p *Category) []interface{} {
+	return d.pfields(p)
 }
 
 func (d *Categorys) ScanFields(p *Category) []interface{} {
@@ -66,58 +109,6 @@ func (d *Categorys) ScanFields(p *Category) []interface{} {
 		&p.ParentID,
 		&p.Name,
 		&p.IsDisabled,
-	}
-}
-
-func (d *Categorys) TableDef() *schema.Table {
-	return &schema.Table{
-		Name: d.Table(),
-		Columns: []*schema.Column{
-			{
-				Name:       "id",
-				Type:       "uuid",
-				PrimaryKey: true,
-			},
-			{
-				Name: "created_at",
-				Type: "timestamptz",
-			},
-			{
-				Name: "updated_at",
-				Type: "timestamptz",
-			},
-			{
-				Name:     "deleted_at",
-				Type:     "timestamptz",
-				Nullable: true,
-			},
-			{
-				Name: "parent_id",
-				Type: "uuid",
-			},
-			{
-				Name: "name",
-				Type: "varchar(200)",
-			},
-			{
-				Name: "is_disabled",
-				Type: "boolean",
-				Default: sql.NullString{
-					String: "false",
-					Valid:  true,
-				},
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "categories_deleted_at",
-				Columns: []string{"deleted_at"},
-			},
-			{
-				Name:    "categories_parent_id",
-				Columns: []string{"parent_id"},
-			},
-		},
 	}
 }
 
@@ -163,45 +154,4 @@ func (d *Categorys) ListCategoriesUpdatedFrom(ctx context.Context, updatedFrom t
 	}
 
 	return ret, nil
-}
-
-func CategoryModel() *goerd.ObjectModel[Category] {
-	md := goerd.Model[Category](
-		"categories",
-		goerd.Field[uuid.UUID](&schema.Column{
-			Name:       "id",
-			Type:       "uuid",
-			PrimaryKey: true,
-		}),
-		goerd.Field[time.Time](&schema.Column{
-			Name: "created_at",
-			Type: "timestamptz",
-		}),
-		goerd.Field[time.Time](&schema.Column{
-			Name: "updated_at",
-			Type: "timestamptz",
-		}),
-		goerd.Field[sql.NullTime](&schema.Column{
-			Name:     "deleted_at",
-			Type:     "timestamptz",
-			Nullable: true,
-		}),
-		goerd.Field[uuid.UUID](&schema.Column{
-			Name: "parent_id",
-			Type: "uuid",
-		}),
-		goerd.Field[string](&schema.Column{
-			Name: "name",
-			Type: "varchar(200)",
-		}),
-		goerd.Field[bool](&schema.Column{
-			Name: "is_disabled",
-			Type: "boolean",
-			Default: sql.NullString{
-				String: "false",
-				Valid:  true,
-			},
-		}),
-	)
-	return md
 }

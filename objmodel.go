@@ -175,10 +175,12 @@ func (md *ModelSet) Migrate(d *sqlx.DB, dbSchema string) error {
 
 		if err != nil {
 			_ = tx.Rollback()
+
 			fmt.Println("db schema:")
 			dbsch.SaveYaml(os.Stdout)
 			fmt.Println("target schema:")
 			migsch.SaveYaml(os.Stdout)
+
 			return fmt.Errorf("cannot migrate database: %w", err)
 		}
 	}

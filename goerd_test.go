@@ -2,8 +2,8 @@ package goerd_test
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"testing"
@@ -15,25 +15,35 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//go:embed shop.yaml
+var shopSchemeYaml []byte
+
 func TestBasicUsage(t *testing.T) {
 	if db == nil {
-		log.Fatal("run TestMain before")
+		t.Fatal("run TestMain before")
+		return
 	}
 
-	cats := NewCategorys()
-	prods := NewProducts()
-
-	targetSchema := &schema.Schema{
-		CurrentSchema: "public",
-		Tables: []*schema.Table{
-			cats.TableDef(),
-			prods.TableDef(),
-		},
+	targetSchema := &schema.Schema{}
+	if err := targetSchema.UnmarshalYAML(shopSchemeYaml); err != nil {
+		t.Error("targetSchema.UnmarshalYAML error:", err)
+		return
 	}
 
-	err := Migrate(db, targetSchema)
+	cats, err := NewCategorys(targetSchema)
 	if err != nil {
-		t.Errorf("Migrate error: %s", err)
+		t.Error("NewCategorys error:", err)
+		return
+	}
+	prods, err := NewProducts(targetSchema)
+	if err != nil {
+		t.Error("NewProducts error:", err)
+		return
+	}
+
+	err = Migrate(db, targetSchema)
+	if err != nil {
+		t.Error("Migrate error:", err)
 		return
 	}
 
@@ -112,10 +122,12 @@ func Migrate(d *sqlx.DB, migsch *schema.Schema) error {
 
 		if err != nil {
 			_ = tx.Rollback()
+
 			fmt.Println("db schema:")
 			dbsch.SaveYaml(os.Stdout)
 			fmt.Println("target schema:")
 			migsch.SaveYaml(os.Stdout)
+
 			return fmt.Errorf("cannot migrate database: %w", err)
 		}
 	}
