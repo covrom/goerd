@@ -26,6 +26,31 @@ type Table struct {
 	Def         string        `json:"def"`
 }
 
+func (t *Table) Validate() error {
+	if t.Name == "" {
+		return fmt.Errorf("table name not defined")
+	}
+	if len(t.Columns) == 0 {
+		return fmt.Errorf("table columns not defined")
+	}
+	for _, c := range t.Columns {
+		if err := c.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, idx := range t.Indexes {
+		if err := idx.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, c := range t.Constraints {
+		if err := c.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Index is the struct for database index
 type Index struct {
 	Name         string `json:"name"`
@@ -44,6 +69,19 @@ type Index struct {
 	Comment      string   `json:"comment"`
 }
 
+func (idx *Index) Validate() error {
+	if idx.Name == "" {
+		return fmt.Errorf("index name not defined")
+	}
+	if idx.Table == nil {
+		return fmt.Errorf("index table not defined")
+	}
+	if idx.ColDef == "" && len(idx.Columns) == 0 {
+		return fmt.Errorf("index columns not defined")
+	}
+	return nil
+}
+
 // Constraint is the struct for database constraint
 type Constraint struct {
 	Name             string   `json:"name"`
@@ -58,6 +96,31 @@ type Constraint struct {
 	Comment          string   `json:"comment"`
 }
 
+func (c *Constraint) Validate() error {
+	if c.Name == "" {
+		return fmt.Errorf("constraint name not defined")
+	}
+	if c.Table == nil {
+		return fmt.Errorf("constraint table not defined")
+	}
+	if len(c.Check) > 0 {
+		return nil
+	}
+	if c.Type == "" {
+		return fmt.Errorf("constraint type not defined")
+	}
+	if len(c.Columns) == 0 {
+		return fmt.Errorf("relation columns not defined")
+	}
+	if c.Type == TypeFK && len(c.ReferenceColumns) == 0 {
+		return fmt.Errorf("FK-relation reference columns not defined")
+	}
+	if c.Type == TypeFK && c.ReferenceTable == nil {
+		return fmt.Errorf("FK-relation reference table not defined")
+	}
+	return nil
+}
+
 // Column is the struct for table column
 type Column struct {
 	Name            string         `json:"name"`
@@ -68,6 +131,16 @@ type Column struct {
 	Comment         string         `json:"comment"`
 	ParentRelations []*Relation    `json:"-"`
 	ChildRelations  []*Relation    `json:"-"`
+}
+
+func (c *Column) Validate() error {
+	if c.Name == "" {
+		return fmt.Errorf("column name not defined")
+	}
+	if c.Type == "" {
+		return fmt.Errorf("column type not defined")
+	}
+	return nil
 }
 
 // Relation is the struct for table relation
@@ -81,6 +154,25 @@ type Relation struct {
 	Def           string    `json:"def"`
 }
 
+func (r *Relation) Validate() error {
+	if r.Name == "" {
+		return fmt.Errorf("relation name not defined")
+	}
+	if r.Table == nil {
+		return fmt.Errorf("relation table not defined")
+	}
+	if len(r.Columns) == 0 {
+		return fmt.Errorf("relation columns not defined")
+	}
+	if r.ParentTable == nil {
+		return fmt.Errorf("relation parent table not defined")
+	}
+	if len(r.ParentColumns) == 0 {
+		return fmt.Errorf("relation parent columns not defined")
+	}
+	return nil
+}
+
 // Schema is the struct for database schema
 type Schema struct {
 	Name          string      `json:"name"`
@@ -89,6 +181,20 @@ type Schema struct {
 	Relations     []*Relation `json:"relations"`
 	CurrentSchema string      `json:"currentSchema"`
 	SearchPaths   []string    `json:"searchPaths,omitempty"`
+}
+
+func (s *Schema) Validate() error {
+	for _, t := range s.Tables {
+		if err := t.Validate(); err != nil {
+			return fmt.Errorf("table %q validation error: %w", t.Name, err)
+		}
+	}
+	for _, r := range s.Relations {
+		if err := r.Validate(); err != nil {
+			return fmt.Errorf("relation %q validation error: %w", r.Name, err)
+		}
+	}
+	return nil
 }
 
 func (s *Schema) NormalizeTableName(name string) string {

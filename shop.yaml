@@ -28,6 +28,12 @@ tables:
         columns: [category_id]
       products_code:
         columns: [code]
+    relations:
+      categories:
+        name: product_category_rel
+        columns: [category_id]
+        parentColumns: [id]
+        onDelete: CASCADE
   categories:
     columns:
       id:
@@ -42,6 +48,7 @@ tables:
         nullable: true
       parent_id:
         type: uuid
+        nullable: true
       name:
         type: varchar
       is_disabled:
@@ -52,3 +59,9 @@ tables:
         columns: [deleted_at]
       categories_parent_id:
         columns: [parent_id]
+    relations:
+      categories:
+          name: category_parent_rel
+          columns: [parent_id]
+          parentColumns: [id]
+          onDelete: CASCADE

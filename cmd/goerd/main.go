@@ -59,7 +59,10 @@ func main() {
 		}
 		f.Close()
 
-		qs := goerd.GenerateMigrationSQL(src, dst)
+		qs, err := goerd.GenerateMigrationSQL(src, dst)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if cmdIsPrint {
 			for _, q := range qs {
 				if !*drop {
@@ -93,7 +96,7 @@ func main() {
 		}
 		f.Close()
 
-		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -122,7 +125,10 @@ func main() {
 			log.Fatal(err)
 		}
 
-		qs := goerd.GenerateMigrationSQL(src, dst)
+		qs, err := goerd.GenerateMigrationSQL(src, dst)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if cmdIsPrint {
 			for _, q := range qs {
 				if !*drop {
@@ -181,7 +187,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -198,7 +204,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		wr, err := os.OpenFile(*to, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -219,7 +225,10 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		qs := goerd.GenerateMigrationSQL(src, dst)
+		qs, err := goerd.GenerateMigrationSQL(src, dst)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if cmdIsPrint {
 			for _, q := range qs {
 				if !*drop {

@@ -1,0 +1,60 @@
+@startuml
+hide methods
+hide stereotypes
+
+skinparam class {
+	BackgroundColor White
+	BorderColor #6E6E6E
+	ArrowColor #6E6E6E
+}
+
+' tables
+rectangle "categories" {
+	entity categories as "categories" << (T,#5DBCD2) >> {
+		created_at <font color="#666666">[timestamptz]</font>
+		deleted_at <font color="#666666">[timestamptz]</font>
+		* id <font color="#666666">[uuid]</font>
+		is_disabled <font color="#666666">[boolean]</font>
+		name <font color="#666666">[varchar]</font>
+		# parent_id <font color="#666666">[uuid]</font>
+		updated_at <font color="#666666">[timestamptz]</font>
+	}
+	entity categories_deleted_at as "categories_deleted_at" << (I,#D25D8A) >> {
+		deleted_at
+	}
+	"categories_deleted_at" -- "categories" : "  "
+	entity categories_parent_id as "categories_parent_id" << (I,#D25D8A) >> {
+		parent_id
+	}
+	"categories_parent_id" -- "categories" : "  "
+}
+rectangle "products" {
+	entity products as "products" << (T,#5DBCD2) >> {
+		# category_id <font color="#666666">[uuid]</font>
+		code <font color="#666666">[varchar]</font>
+		created_at <font color="#666666">[timestamptz]</font>
+		deleted_at <font color="#666666">[timestamptz]</font>
+		* id <font color="#666666">[uuid]</font>
+		name <font color="#666666">[varchar]</font>
+		unit <font color="#666666">[varchar]</font>
+		updated_at <font color="#666666">[timestamptz]</font>
+	}
+	entity products_category_id as "products_category_id" << (I,#D25D8A) >> {
+		category_id
+	}
+	"products_category_id" -- "products" : "  "
+	entity products_code as "products_code" << (I,#D25D8A) >> {
+		code
+	}
+	"products_code" -- "products" : "  "
+	entity products_deleted_at as "products_deleted_at" << (I,#D25D8A) >> {
+		deleted_at
+	}
+	"products_deleted_at" -- "products" : "  "
+}
+
+' relations
+"categories" }-- "categories" : "CASCADE"
+"products" }-- "categories" : "CASCADE"
+
+@enduml

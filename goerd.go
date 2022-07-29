@@ -25,10 +25,12 @@ func SchemaFromPostgresDB(db *sql.DB) (*schema.Schema, error) {
 
 // GenerateMigrationSQL generates an array of SQL DDL queries
 // for postgres that modify database tables, columns, indexes, etc.
-func GenerateMigrationSQL(sfrom, sto *schema.Schema) []string {
+func GenerateMigrationSQL(sfrom, sto *schema.Schema) ([]string, error) {
 	ptch := &schema.PatchSchema{CurrentSchema: sfrom.CurrentSchema}
-	ptch.Build(sfrom, sto)
-	return ptch.GenerateSQL()
+	if err := ptch.Build(sfrom, sto); err != nil {
+		return nil, err
+	}
+	return ptch.GenerateSQL(), nil
 }
 
 // SchemaToYAML saves the schema to a yaml file

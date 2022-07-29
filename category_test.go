@@ -17,7 +17,7 @@ type Category struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  sql.NullTime
-	ParentID   uuid.UUID
+	ParentID   *uuid.UUID
 	Name       string
 	IsDisabled bool
 }

@@ -6,7 +6,6 @@ import (
 )
 
 func TestPatchSchema_BuildDropAndNew(t *testing.T) {
-
 	t.Run("1", func(t *testing.T) {
 		from := &Schema{
 			CurrentSchema: "public",
@@ -65,7 +64,10 @@ func TestPatchSchema_BuildDropAndNew(t *testing.T) {
 		}
 
 		s := &PatchSchema{}
-		s.Build(from, to)
+		if err := s.Build(from, to); err != nil {
+			t.Error(err)
+			return
+		}
 		qs := s.GenerateSQL()
 		qss := strings.Join(qs, "\n")
 		if qss != `DROP TABLE IF EXISTS table_old
@@ -79,11 +81,9 @@ CREATE INDEX table1_col3 ON table1(column3)` {
 			t.Error(qss)
 		}
 	})
-
 }
 
 func TestPatchSchema_BuildAddColIdx(t *testing.T) {
-
 	t.Run("1", func(t *testing.T) {
 		from := &Schema{
 			CurrentSchema: "public",
@@ -152,7 +152,10 @@ func TestPatchSchema_BuildAddColIdx(t *testing.T) {
 		}
 
 		s := &PatchSchema{}
-		s.Build(from, to)
+		if err := s.Build(from, to); err != nil {
+			t.Error(err)
+			return
+		}
 		qs := s.GenerateSQL()
 		qss := strings.Join(qs, "\n")
 		if qss != `ALTER TABLE table1 ADD COLUMN column3 uuid NOT NULL
@@ -161,11 +164,9 @@ ALTER TABLE table1 ADD CONSTRAINT table1_constraint_check CHECK (true)` {
 			t.Error(qss)
 		}
 	})
-
 }
 
 func TestPatchSchema_BuildEq(t *testing.T) {
-
 	t.Run("1", func(t *testing.T) {
 		from := &Schema{
 			CurrentSchema: "public",
@@ -220,18 +221,19 @@ func TestPatchSchema_BuildEq(t *testing.T) {
 		}
 
 		s := &PatchSchema{}
-		s.Build(from, to)
+		if err := s.Build(from, to); err != nil {
+			t.Error(err)
+			return
+		}
 		qs := s.GenerateSQL()
 		qss := strings.Join(qs, "\n")
 		if qss != `` {
 			t.Error(qss)
 		}
 	})
-
 }
 
 func TestPatchSchema_BuildChangeCol(t *testing.T) {
-
 	t.Run("1", func(t *testing.T) {
 		from := &Schema{
 			CurrentSchema: "public",
@@ -286,18 +288,19 @@ func TestPatchSchema_BuildChangeCol(t *testing.T) {
 		}
 
 		s := &PatchSchema{}
-		s.Build(from, to)
+		if err := s.Build(from, to); err != nil {
+			t.Error(err)
+			return
+		}
 		qs := s.GenerateSQL()
 		qss := strings.Join(qs, "\n")
 		if qss != `ALTER TABLE table1 ALTER COLUMN column2 TYPE text` {
 			t.Error(qss)
 		}
 	})
-
 }
 
 func TestPatchSchema_BuildChangeIdx(t *testing.T) {
-
 	t.Run("1", func(t *testing.T) {
 		from := &Schema{
 			CurrentSchema: "public",
@@ -356,7 +359,10 @@ func TestPatchSchema_BuildChangeIdx(t *testing.T) {
 		}
 
 		s := &PatchSchema{}
-		s.Build(from, to)
+		if err := s.Build(from, to); err != nil {
+			t.Error(err)
+			return
+		}
 		qs := s.GenerateSQL()
 		qss := strings.Join(qs, "\n")
 		if qss != `ALTER TABLE table1 ADD COLUMN column3 uuid NOT NULL
@@ -365,7 +371,6 @@ CREATE INDEX table1_col2 ON table1(column2,column3)` {
 			t.Error(qss)
 		}
 	})
-
 }
 
 func TestPatchSchema_BuildChangeIdx2(t *testing.T) {
@@ -428,12 +433,14 @@ func TestPatchSchema_BuildChangeIdx2(t *testing.T) {
 
 	t.Run("1", func(t *testing.T) {
 		s := &PatchSchema{}
-		s.Build(from, to)
+		if err := s.Build(from, to); err != nil {
+			t.Error(err)
+			return
+		}
 		qs := s.GenerateSQL()
 		qss := strings.Join(qs, "\n")
 		if qss != `` {
 			t.Error(qss)
 		}
 	})
-
 }

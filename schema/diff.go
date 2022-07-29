@@ -237,6 +237,7 @@ func createIndexDDL(idx *Index) string {
 func (i *PatchIndex) create() []string {
 	return []string{createIndexDDL(i.to)}
 }
+
 func (i *PatchIndex) alter() []string {
 	if i.from.MethodName == "" {
 		i.from.MethodName = "btree"
@@ -249,6 +250,7 @@ func (i *PatchIndex) alter() []string {
 	}
 	return append(i.drop(), i.create()...)
 }
+
 func (i *PatchIndex) drop() []string {
 	// always drop unused indexes
 	return []string{
@@ -361,6 +363,7 @@ func createRelationDDL(r *Relation) string {
 func (r *PatchRelation) create() []string {
 	return []string{createRelationDDL(r.to)}
 }
+
 func (r *PatchRelation) alter() []string {
 	if strings.EqualFold(createRelationDDL(r.from),
 		createRelationDDL(r.to)) {
@@ -368,6 +371,7 @@ func (r *PatchRelation) alter() []string {
 	}
 	return append(r.drop(), r.create()...)
 }
+
 func (r *PatchRelation) drop() []string {
 	// TODO:
 	// declare r record;
@@ -391,7 +395,7 @@ type PatchSchema struct {
 }
 
 func (t *PatchSchema) GenerateSQL() (ret []string) {
-	// TODO: using CurrentSchema
+	// TODO: using CurrentSchema as schema prefix
 	for _, st := range t.tables {
 		ret = append(ret, st.GenerateSQL()...)
 	}
@@ -401,7 +405,13 @@ func (t *PatchSchema) GenerateSQL() (ret []string) {
 	return
 }
 
-func (s *PatchSchema) Build(from, to *Schema) {
+func (s *PatchSchema) Build(from, to *Schema) error {
+	if err := from.Validate(); err != nil {
+		return fmt.Errorf("source schema validation error: %w", err)
+	}
+	if err := to.Validate(); err != nil {
+		return fmt.Errorf("target schema validation error: %w", err)
+	}
 	s.CurrentSchema = to.CurrentSchema
 	s.tables = make([]*PatchTable, 0, len(from.Tables)+len(to.Tables))
 	s.relations = make([]*PatchRelation, 0, len(from.Relations)+len(to.Relations))
@@ -609,4 +619,5 @@ func (s *PatchSchema) Build(from, to *Schema) {
 			s.relations = append(s.relations, pt)
 		}
 	}
+	return nil
 }

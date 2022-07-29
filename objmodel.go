@@ -153,7 +153,10 @@ func (md *ModelSet) Migrate(d *sqlx.DB, dbSchema string) error {
 		return fmt.Errorf("cannot migrate database: %w", err)
 	}
 
-	qs := GenerateMigrationSQL(dbsch, migsch)
+	qs, err := GenerateMigrationSQL(dbsch, migsch)
+	if err != nil {
+		return fmt.Errorf("cannot migrate database: %w", err)
+	}
 	tx, err := d.Begin()
 	if err != nil {
 		return fmt.Errorf("cannot migrate database: %w", err)

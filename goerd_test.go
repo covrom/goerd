@@ -62,13 +62,13 @@ func TestBasicUsage(t *testing.T) {
 
 	ctx := goerd.WithSqlxDb(context.Background(), db)
 
-	if err := prods.ProductToStore(ctx, p); err != nil {
-		t.Errorf("ProductToStore error: %s", err)
+	if err := cats.CategoryToStore(ctx, c); err != nil {
+		t.Errorf("CategoryToStore error: %s", err)
 		return
 	}
 
-	if err := cats.CategoryToStore(ctx, c); err != nil {
-		t.Errorf("CategoryToStore error: %s", err)
+	if err := prods.ProductToStore(ctx, p); err != nil {
+		t.Errorf("ProductToStore error: %s", err)
 		return
 	}
 
@@ -100,7 +100,10 @@ func Migrate(d *sqlx.DB, migsch *schema.Schema) error {
 	if err != nil {
 		return fmt.Errorf("cannot migrate database: %w", err)
 	}
-	qs := goerd.GenerateMigrationSQL(dbsch, migsch)
+	qs, err := goerd.GenerateMigrationSQL(dbsch, migsch)
+	if err != nil {
+		return err
+	}
 	tx, err := d.Begin()
 	if err != nil {
 		return fmt.Errorf("cannot migrate database: %w", err)
@@ -128,7 +131,7 @@ func Migrate(d *sqlx.DB, migsch *schema.Schema) error {
 			fmt.Println("target schema:")
 			migsch.SaveYaml(os.Stdout)
 
-			return fmt.Errorf("cannot migrate database: %w", err)
+			return fmt.Errorf("cannot migrate database %q: %w", q, err)
 		}
 	}
 	if err = tx.Commit(); err != nil {
