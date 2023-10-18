@@ -73,9 +73,9 @@ func (idx *Index) Validate() error {
 	if idx.Name == "" {
 		return fmt.Errorf("index name not defined")
 	}
-	if idx.Table == nil {
-		return fmt.Errorf("index table not defined")
-	}
+	// if idx.Table == nil {
+	// 	return fmt.Errorf("index table not defined")
+	// }
 	if idx.ColDef == "" && len(idx.Columns) == 0 {
 		return fmt.Errorf("index columns not defined")
 	}
@@ -100,9 +100,9 @@ func (c *Constraint) Validate() error {
 	if c.Name == "" {
 		return fmt.Errorf("constraint name not defined")
 	}
-	if c.Table == nil {
-		return fmt.Errorf("constraint table not defined")
-	}
+	// if c.Table == nil {
+	// 	return fmt.Errorf("constraint table not defined")
+	// }
 	if len(c.Check) > 0 {
 		return nil
 	}

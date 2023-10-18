@@ -367,7 +367,7 @@ func TestPatchSchema_BuildChangeIdx(t *testing.T) {
 		qss := strings.Join(qs, "\n")
 		if qss != `ALTER TABLE table1 ADD COLUMN column3 uuid NOT NULL
 DROP INDEX IF EXISTS table1_col2
-CREATE INDEX table1_col2 ON table1(column2,column3)` {
+CREATE INDEX table1_col2 ON table1 USING btree(column2,column3)` {
 			t.Error(qss)
 		}
 	})
